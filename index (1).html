@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UPPETA 2026 內部活動平台</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=Noto+Sans+TC:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #1F456E;
+  --navy-light: #2a5a8e;
+  --sky: #4A90D9;
+  --sky-light: #E8F4FD;
+  --gold: #F7C948;
+  --gold-light: #FEF9E7;
+  --mint: #2ECC8F;
+  --mint-light: #E8F8F1;
+  --coral: #FF6B6B;
+  --coral-light: #FFF0EF;
+  --bg: #F4F6F9;
+  --white: #ffffff;
+  --text: #1a2332;
+  --text-muted: #6b7a8d;
+  --border: #e2e8f0;
+  --shadow: 0 2px 12px rgba(31,69,110,0.08);
+  --shadow-hover: 0 8px 28px rgba(31,69,110,0.16);
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', 'Noto Sans TC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: var(--navy);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px; height: 60px;
+  box-shadow: 0 2px 16px rgba(31,69,110,0.25);
+}
+.nav-logo {
+  color: white; font-weight: 600; font-size: 17px; letter-spacing: 0.04em;
+  display: flex; align-items: center; gap: 8px;
+}
+.nav-logo span { opacity: 0.55; font-weight: 300; }
+.nav-links { display: flex; gap: 4px; }
+.nav-links a {
+  color: rgba(255,255,255,0.75); text-decoration: none;
+  padding: 6px 14px; border-radius: 20px; font-size: 13.5px; font-weight: 400;
+  transition: all 0.2s;
+}
+.nav-links a:hover { color: white; background: rgba(255,255,255,0.12); }
+
+/* COUNTDOWN BANNER */
+.countdown-banner {
+  position: fixed; top: 60px; left: 0; right: 0; z-index: 99;
+  background: var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px; padding: 9px 20px;
+  font-size: 13.5px; font-weight: 500; color: var(--navy);
+}
+.cd-units { display: flex; gap: 8px; align-items: center; }
+.cd-unit {
+  background: var(--navy); color: var(--gold);
+  border-radius: 6px; padding: 2px 8px;
+  font-size: 13px; font-weight: 600; letter-spacing: 0.04em;
+  min-width: 38px; text-align: center;
+}
+.cd-sep { opacity: 0.4; }
+
+/* MAIN CONTENT */
+main { padding-top: 108px; }
+section { padding: 56px 32px; max-width: 1100px; margin: 0 auto; }
+
+/* HERO */
+.hero { text-align: center; padding-top: 64px; padding-bottom: 48px; }
+.hero h1 {
+  font-size: 38px; font-weight: 600; color: var(--navy);
+  letter-spacing: -0.02em; margin-bottom: 10px;
+}
+.hero p { color: var(--text-muted); font-size: 16px; font-weight: 300; }
+
+/* MONTH CARDS */
+.months-scroll {
+  display: flex; gap: 14px; overflow-x: auto; padding: 8px 4px 16px;
+  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+}
+.month-card {
+  flex: 0 0 130px; background: var(--white);
+  border-radius: var(--radius); padding: 18px 14px;
+  box-shadow: var(--shadow); cursor: pointer;
+  transition: all 0.22s; border: 1.5px solid transparent;
+  position: relative;
+}
+.month-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: var(--sky); }
+.month-card .month-num { font-size: 11px; color: var(--text-muted); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
+.month-card .month-name { font-size: 22px; font-weight: 600; color: var(--navy); margin: 2px 0 10px; }
+.month-card .month-activity { font-size: 11.5px; color: var(--text-muted); line-height: 1.5; }
+.badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 10px; font-weight: 600; padding: 2px 7px;
+  border-radius: 20px; margin-top: 6px; letter-spacing: 0.02em;
+}
+.badge-tb { background: var(--sky-light); color: var(--navy); }
+.badge-dinner { background: var(--mint-light); color: #1a7a50; }
+.badge-learn { background: #f0eeff; color: #5b4abf; }
+.badge-vote { background: var(--gold-light); color: #8a6800; }
+.badge-anni { background: var(--gold); color: var(--navy); }
+.month-card.special-11 { border-color: var(--gold); background: linear-gradient(135deg, #fff 60%, #fef9e7); }
+.star-badge {
+  position: absolute; top: -8px; right: -8px;
+  background: var(--gold); color: var(--navy);
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; box-shadow: 0 2px 8px rgba(247,201,72,0.5);
+}
+
+/* SECTION HEADERS */
+.section-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 28px;
+}
+.section-header h2 { font-size: 22px; font-weight: 600; color: var(--navy); }
+.section-tag {
+  background: var(--sky-light); color: var(--sky);
+  font-size: 11px; font-weight: 600; padding: 3px 10px;
+  border-radius: 20px; letter-spacing: 0.04em;
+}
+
+/* MONTH DETAIL SECTIONS */
+.month-detail { scroll-margin-top: 120px; }
+section { scroll-margin-top: 108px; }
+#spinner-section { scroll-margin-top: 108px; }
+.month-detail-header {
+  display: flex; align-items: baseline; gap: 14px; margin-bottom: 16px;
+}
+.month-detail-header h3 { font-size: 20px; font-weight: 600; color: var(--navy); }
+.busy-bar {
+  background: var(--coral-light); border-left: 3px solid var(--coral);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 9px 14px; margin-bottom: 14px;
+  font-size: 13px; color: #c0392b; display: flex; align-items: center; gap: 8px;
+}
+.activities-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.activity-card {
+  background: var(--white); border-radius: var(--radius); padding: 16px 18px;
+  border-left: 3px solid var(--mint); box-shadow: var(--shadow);
+  transition: all 0.2s;
+}
+.activity-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+.activity-date { font-size: 11.5px; color: var(--text-muted); font-weight: 500; margin-bottom: 4px; }
+.activity-title { font-size: 14.5px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+.activity-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+/* VOTE SECTION */
+.vote-section { margin-top: 20px; }
+.vote-title { font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.vote-cards { display: grid; gap: 10px; }
+.vote-card {
+  background: var(--white); border-radius: var(--radius); padding: 14px 16px;
+  border: 1.5px solid var(--border); cursor: pointer;
+  transition: all 0.2s; display: flex; align-items: center; gap: 14px;
+}
+.vote-card:hover { border-color: var(--sky); background: var(--sky-light); }
+.vote-card.selected { border-color: var(--sky); background: var(--sky-light); }
+.vote-check {
+  width: 22px; height: 22px; border-radius: 4px; border: 2px solid var(--border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; transition: all 0.2s; background: var(--bg);
+}
+.vote-card.selected .vote-check { background: var(--sky); border-color: var(--sky); color: white; }
+.vote-info { flex: 1; }
+.vote-name { font-size: 13.5px; font-weight: 500; color: var(--text); }
+.vote-sub { font-size: 12px; color: var(--text-muted); }
+.vote-bar-wrap { margin-top: 6px; background: var(--border); border-radius: 4px; height: 4px; }
+.vote-bar { height: 4px; border-radius: 4px; background: var(--mint); transition: width 0.4s ease; }
+.vote-count { font-size: 12px; color: var(--text-muted); font-weight: 500; white-space: nowrap; }
+
+/* SPINNER */
+#spinner-section { background: linear-gradient(135deg, var(--navy) 0%, #2a5a8e 100%); border-radius: 20px; padding: 40px; margin: 0 32px; max-width: 1100px; margin-left: auto; margin-right: auto; }
+#spinner-section .section-header h2 { color: white; }
+.spinner-layout { display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap; }
+.spinner-canvas-wrap { position: relative; flex-shrink: 0; }
+#spinnerCanvas { border-radius: 50%; box-shadow: 0 8px 40px rgba(0,0,0,0.3); cursor: pointer; }
+.spin-btn {
+  display: block; margin: 18px auto 0;
+  background: var(--gold); color: var(--navy);
+  border: none; padding: 11px 32px; border-radius: 30px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: all 0.2s; font-family: inherit; letter-spacing: 0.02em;
+}
+.spin-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(247,201,72,0.4); }
+.spin-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.spinner-info { flex: 1; min-width: 240px; }
+.spinner-info h3 { color: rgba(255,255,255,0.6); font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+.winner-display {
+  background: rgba(255,255,255,0.1); border-radius: var(--radius);
+  padding: 16px; margin-bottom: 16px; min-height: 70px;
+  display: flex; align-items: center; justify-content: center;
+}
+.winner-names { text-align: center; color: white; }
+.winner-names .label { font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 6px; }
+.winner-names .names { font-size: 22px; font-weight: 600; letter-spacing: 0.02em; }
+.history-list { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
+.history-item {
+  background: rgba(255,255,255,0.08); border-radius: 8px;
+  padding: 8px 12px; font-size: 12.5px; color: rgba(255,255,255,0.8);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.history-month { color: var(--gold); font-weight: 500; }
+.people-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.person-chip {
+  background: rgba(255,255,255,0.15); color: white;
+  border-radius: 20px; padding: 4px 12px; font-size: 12px;
+  transition: all 0.2s;
+}
+.person-chip.done { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.35); text-decoration: line-through; }
+.reset-btn {
+  background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6);
+  border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px;
+  border-radius: 20px; font-size: 12px; cursor: pointer;
+  transition: all 0.2s; font-family: inherit; margin-top: 12px;
+}
+.reset-btn:hover { background: rgba(255,0,0,0.2); color: #ff8080; border-color: #ff8080; }
+
+/* WISHLIST */
+.wish-form { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
+.wish-form input {
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  padding: 10px 14px; font-family: inherit; font-size: 14px;
+  background: var(--white); color: var(--text); outline: none;
+  transition: border-color 0.2s;
+}
+.wish-form input:focus { border-color: var(--sky); }
+.wish-form input.name-in { width: 120px; }
+.wish-form input.wish-in { flex: 1; min-width: 200px; }
+.submit-btn {
+  background: var(--navy); color: white; border: none;
+  padding: 10px 20px; border-radius: var(--radius-sm);
+  font-family: inherit; font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.submit-btn:hover { background: var(--navy-light); transform: translateY(-1px); }
+.wishes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+.wish-note {
+  border-radius: 12px; padding: 16px; position: relative;
+  box-shadow: var(--shadow); transition: all 0.2s;
+  min-height: 110px;
+}
+.wish-note:hover { transform: translateY(-2px) rotate(0.5deg); box-shadow: var(--shadow-hover); }
+.wish-author { font-size: 11px; font-weight: 600; opacity: 0.6; margin-bottom: 6px; letter-spacing: 0.04em; }
+.wish-text { font-size: 13.5px; line-height: 1.5; }
+.wish-like {
+  position: absolute; bottom: 10px; right: 12px;
+  background: rgba(255,255,255,0.5); border: none; border-radius: 20px;
+  padding: 3px 9px; font-size: 12px; cursor: pointer;
+  transition: all 0.2s; display: flex; align-items: center; gap: 4px;
+}
+.wish-like:hover { background: rgba(255,255,255,0.85); transform: scale(1.05); }
+
+/* SPORT FLOAT */
+#sport-fab {
+  position: fixed; bottom: 28px; right: 28px; z-index: 200;
+}
+.fab-btn {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--navy); color: white;
+  border: none; font-size: 22px; cursor: pointer;
+  box-shadow: 0 4px 20px rgba(31,69,110,0.35);
+  transition: all 0.22s; display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.fab-btn:hover { transform: scale(1.08); background: var(--navy-light); }
+.fab-badge {
+  position: absolute; top: -4px; right: -4px;
+  background: var(--coral); color: white;
+  width: 20px; height: 20px; border-radius: 50%;
+  font-size: 11px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--bg);
+}
+.sport-panel {
+  position: absolute; bottom: 68px; right: 0;
+  width: 320px; background: var(--white);
+  border-radius: 18px; box-shadow: 0 12px 48px rgba(31,69,110,0.2);
+  overflow: hidden; display: none;
+  animation: panelUp 0.25s ease;
+}
+.sport-panel.open { display: block; }
+@keyframes panelUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+.panel-header {
+  background: var(--navy); color: white;
+  padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;
+}
+.panel-header h4 { font-size: 14px; font-weight: 600; }
+.panel-close { background: none; border: none; color: rgba(255,255,255,0.6); font-size: 18px; cursor: pointer; line-height: 1; }
+.panel-body { padding: 16px; max-height: 420px; overflow-y: auto; }
+.panel-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+.panel-tab {
+  flex: 1; padding: 7px; border-radius: 8px; border: 1.5px solid var(--border);
+  background: var(--bg); font-size: 12.5px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s; text-align: center; font-family: inherit;
+}
+.panel-tab.active { background: var(--navy); color: white; border-color: var(--navy); }
+.sport-status {
+  background: var(--sky-light); border-radius: 10px;
+  padding: 12px; margin-bottom: 12px;
+}
+.sport-item { font-size: 16px; font-weight: 600; color: var(--navy); }
+.sport-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.progress-wrap { margin: 10px 0 6px; }
+.progress-label { font-size: 11.5px; color: var(--text-muted); margin-bottom: 4px; display: flex; justify-content: space-between; }
+.progress-bg { background: var(--border); border-radius: 6px; height: 8px; }
+.progress-fill { height: 8px; border-radius: 6px; background: var(--sky); transition: width 0.4s, background 0.4s; }
+.progress-fill.full { background: var(--mint); }
+.join-btn {
+  width: 100%; padding: 10px; border-radius: 10px;
+  background: var(--navy); color: white; border: none;
+  font-family: inherit; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s; margin-top: 8px;
+}
+.join-btn:hover { background: var(--navy-light); }
+.join-btn.joined { background: var(--coral-light); color: var(--coral); }
+.registrants { margin-top: 10px; }
+.registrant-tag {
+  display: inline-flex; background: var(--bg); border-radius: 20px;
+  padding: 3px 10px; font-size: 11.5px; margin: 2px; color: var(--text-muted);
+}
+.initiate-form input, .initiate-form textarea {
+  width: 100%; border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 9px 12px; font-family: inherit; font-size: 13.5px;
+  background: var(--bg); margin-bottom: 8px; outline: none;
+  transition: border-color 0.2s; resize: none;
+}
+.initiate-form input:focus, .initiate-form textarea:focus { border-color: var(--sky); background: white; }
+.sport-vote-option {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 10px; border-radius: 8px; cursor: pointer;
+  transition: all 0.2s; margin-bottom: 6px;
+  background: var(--bg); border: 1.5px solid transparent;
+}
+.sport-vote-option:hover { border-color: var(--sky); background: var(--sky-light); }
+.sport-vote-option.picked { border-color: var(--mint); background: var(--mint-light); }
+.svo-name { font-size: 13px; font-weight: 500; }
+.svo-bar-wrap { flex: 1; margin: 0 10px; background: var(--border); border-radius: 4px; height: 4px; }
+.svo-bar { height: 4px; border-radius: 4px; background: var(--mint); transition: width 0.4s; }
+.svo-count { font-size: 11.5px; color: var(--text-muted); font-weight: 500; }
+
+/* MODAL */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  z-index: 300; display: none; align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: white; border-radius: 16px; padding: 28px;
+  max-width: 360px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  animation: modalIn 0.2s ease;
+}
+@keyframes modalIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+.modal-box h4 { font-size: 17px; font-weight: 600; color: var(--navy); margin-bottom: 8px; }
+.modal-box p { color: var(--text-muted); font-size: 14px; margin-bottom: 18px; }
+.modal-box input {
+  width: 100%; border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 10px 14px; font-family: inherit; font-size: 14px;
+  outline: none; margin-bottom: 14px; transition: border-color 0.2s;
+}
+.modal-box input:focus { border-color: var(--sky); }
+.modal-btns { display: flex; gap: 8px; }
+.modal-confirm {
+  flex: 1; background: var(--navy); color: white; border: none;
+  padding: 10px; border-radius: 8px; font-family: inherit;
+  font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s;
+}
+.modal-confirm:hover { background: var(--navy-light); }
+.modal-cancel {
+  flex: 1; background: var(--bg); color: var(--text-muted); border: none;
+  padding: 10px; border-radius: 8px; font-family: inherit;
+  font-size: 14px; cursor: pointer; transition: all 0.2s;
+}
+.modal-cancel:hover { background: var(--border); }
+
+/* DIVIDER */
+.section-divider { height: 1px; background: var(--border); margin: 0 32px; }
+
+/* FOOTER */
+footer {
+  text-align: center; padding: 28px;
+  color: var(--text-muted); font-size: 12.5px;
+  border-top: 1px solid var(--border); margin-top: 40px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 640px) {
+  nav { padding: 0 16px; }
+  .nav-links { display: none; }
+  section { padding: 40px 16px; }
+  #spinner-section { margin: 0 16px; padding: 28px 20px; }
+  .spinner-layout { gap: 24px; }
+  #spinnerCanvas { width: 220px !important; height: 220px !important; }
+  .hero h1 { font-size: 26px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">UPPETA <span>2026</span></div>
+  <div class="nav-links">
+    <a href="#overview">年度總覽</a>
+    <a href="#months">月份活動</a>
+    <a href="#spinner-section">Workshop</a>
+    <a href="#wishlist">心願區</a>
+  </div>
+</nav>
+
+<!-- COUNTDOWN BANNER -->
+<div class="countdown-banner">
+  <span>🎉 UPPETA 9 週年倒數</span>
+  <div class="cd-units">
+    <span class="cd-unit" id="cd-days">--</span><span style="font-size:11px;color:var(--navy-light)">天</span>
+    <span class="cd-sep">·</span>
+    <span class="cd-unit" id="cd-hrs">--</span><span style="font-size:11px;color:var(--navy-light)">時</span>
+    <span class="cd-sep">·</span>
+    <span class="cd-unit" id="cd-min">--</span><span style="font-size:11px;color:var(--navy-light)">分</span>
+    <span class="cd-sep">·</span>
+    <span class="cd-unit" id="cd-sec">--</span><span style="font-size:11px;color:var(--navy-light)">秒</span>
+  </div>
+</div>
+
+<main>
+
+<!-- HERO + OVERVIEW -->
+<section id="overview" class="hero">
+  <h1>2026 年度活動總覽</h1>
+  <p>4 月 — 12 月，一起創造美好回憶 ✨</p>
+  <p style="margin-top:10px;font-size:12.5px;color:var(--text-muted);background:var(--gold-light);display:inline-block;padding:5px 14px;border-radius:20px;border:1px solid var(--gold);">📅 各月活動日期暫定，確切時程確認後將提前通知，請大家預備一顆出遊之心～</p>
+</section>
+
+<section style="padding-top:0">
+  <div class="months-scroll" id="monthsScroll"></div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- MONTH DETAILS -->
+<section id="months">
+  <div class="section-header">
+    <h2>月份活動詳情</h2>
+    <span class="section-tag">4月 — 12月</span>
+  </div>
+  <div id="monthDetails"></div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- WORKSHOP SPINNER -->
+<section id="spinner-section" style="padding:40px; border-radius:20px; background:linear-gradient(135deg,#1F456E 0%,#2a5a8e 100%); scroll-margin-top:108px;">
+  <div class="section-header">
+    <h2 style="color:white">Workshop 輪轉盤 🎡</h2>
+  </div>
+  <p style="color:rgba(255,255,255,0.6);font-size:13.5px;margin-bottom:24px;margin-top:-16px;">每月月底抽出 2 位夥伴分享（15–30 分鐘）。前半年每人出場一次，不重複。</p>
+  <div class="spinner-layout">
+    <div class="spinner-canvas-wrap">
+      <canvas id="spinnerCanvas" width="280" height="280"></canvas>
+      <button class="spin-btn" id="spinBtn" onclick="spinWheel()">🎲 開始抽籤</button>
+    </div>
+    <div class="spinner-info">
+      <h3>本月分享者</h3>
+      <div class="winner-display" id="winnerDisplay">
+        <div style="color:rgba(255,255,255,0.35);font-size:13px;">按下按鈕開始抽籤</div>
+      </div>
+      <h3 style="margin-top:16px;">待出場夥伴</h3>
+      <div class="people-row" id="peopleRow"></div>
+      <h3 style="margin-top:16px;">歷史紀錄</h3>
+      <div class="history-list" id="historyList">
+        <div style="color:rgba(255,255,255,0.3);font-size:12.5px;padding:8px;">尚無紀錄</div>
+      </div>
+      <button class="reset-btn" id="resetBtn" data-confirm="0" onclick="resetSpinner()">🗑 重置所有紀錄</button>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider" style="margin-top:0"></div>
+
+<!-- WISHLIST -->
+<section id="wishlist">
+  <div class="section-header">
+    <h2>夥伴心願牆 🌸</h2>
+  </div>
+  <p style="color:var(--text-muted);margin-bottom:20px;font-size:14px;">你想和大家一起做什麼？寫下來，讓大家附議！</p>
+  <div class="wish-form">
+    <input class="wish-in" id="wishText" placeholder="我想和大家一起..." maxlength="60" onkeydown="if(event.key==='Enter')addWish()">
+    <button class="submit-btn" onclick="addWish()">送出 ✦</button>
+  </div>
+  <div class="wishes-grid" id="wishGrid"></div>
+</section>
+
+</main>
+
+<!-- SPORT FAB -->
+<div id="sport-fab">
+  <div class="sport-panel" id="sportPanel">
+    <div class="panel-header">
+      <h4>💪 本週運動揪團</h4>
+      <button class="panel-close" onclick="toggleSportPanel()">✕</button>
+    </div>
+    <div class="panel-body">
+      <div class="panel-tabs">
+        <button class="panel-tab active" onclick="switchTab('status',this)">揪團狀態</button>
+        <button class="panel-tab" onclick="switchTab('vote',this);renderActivityList()">參考活動</button>
+      </div>
+      <div id="tab-status"></div>
+      <div id="tab-vote" style="display:none"></div>
+    </div>
+  </div>
+  <button class="fab-btn" onclick="toggleSportPanel()" title="運動揪團">
+    🏃
+    <div class="fab-badge" id="fabBadge" style="display:none">0</div>
+  </button>
+</div>
+
+<!-- JOIN MODAL -->
+<div class="modal-overlay" id="joinModal">
+  <div class="modal-box">
+    <h4>我要參加！🙌</h4>
+    <p>輸入你的名字，或匿名參加也 OK～</p>
+    <input type="hidden" id="joinGroupIdx" value="0">
+    <input id="joinName" placeholder="你的名字（選填）" maxlength="20">
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeJoinModal()">取消</button>
+      <button class="modal-confirm" onclick="confirmJoin()">確認報名</button>
+    </div>
+  </div>
+</div>
+
+<!-- INITIATE MODAL -->
+<div class="modal-overlay" id="initiateModal">
+  <div class="modal-box">
+    <h4>發起揪團 🚀</h4>
+    <p>成功召集 5 人，公司報銷！可以同週發起多個揪團。</p>
+    <div class="initiate-form">
+      <input id="sportItem" placeholder="運動項目（e.g. 抱石、空中瑜伽...）" maxlength="30">
+      <input id="sportDate" type="date" style="color:var(--text)">
+      <input id="sportTime" placeholder="時間（e.g. 19:00）" maxlength="20">
+      <input id="sportPlace" placeholder="地點（選填）" maxlength="30">
+      <input id="sportOrganizer" placeholder="發起人名字（選填）" maxlength="20">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="document.getElementById('initiateModal').classList.remove('open')">取消</button>
+      <button class="modal-confirm" onclick="confirmInitiate()">發起揪團</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  UPPETA 2026 內部活動平台 · 用 ❤️ 為團隊打造
+</footer>
+
+<script>
+// ─── APPS SCRIPT 串接 ───────────────────────────────
+const APPS_SCRIPT_URL = 'https://script.google.com/a/macros/uppeta.com/s/AKfycbyRZodJ2DOCuGcsbVYMFfGL2zcGplCIhtIhFiIe2eH90z2JyidSsQR54oxpDaB1OwVF/exec';
+
+function trackEvent(payload){
+  fetch(APPS_SCRIPT_URL, {
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  }).catch(()=>{}); // 靜默失敗，不影響前端體驗
+}
+
+// ─── DATA ───────────────────────────────────────────────
+const MONTHS = [
+  { id:'apr', name:'4月', en:'APR', activities:[
+    {date:'4/22',title:'世界地球日聚餐',desc:'大家一起去咖啡廳辦公 or 早午餐，讓辦公室節能減碳',type:'dinner'},
+  ], busy:'4/15（GNI Workshop）前後，請提前安排工作'},
+  { id:'may', name:'5月', en:'MAY', vote:true, activities:[
+    {date:'5月',title:'Team Building（投票決定）',desc:'📅 目前日期暫定，確切時程確認後會提前讓大家準備一顆出遊之心～',type:'tb'},
+  ], busy:'5/1–5/3 勞動節前後，請提前安排工作'},
+  { id:'jun', name:'6月', en:'JUN', activities:[
+    {date:'6/24–6/26',title:'AI TAIWAN 未來商務展 ＋ 端午節聚餐',desc:'展覽吸收 AI 行銷新知，同時搭配端午節一起聚餐慶祝！',type:'learn'},
+  ], busy:'6/17 Brand Leadership Circle 前後，請提前安排工作'},
+  { id:'jul', name:'7月', en:'JUL', activities:[
+    {date:'7/27–7/29',title:'巧克力節特別小活動 🍫',desc:'巧克力噴泉派對，把甜蜜與驚喜帶給每一位夥伴！',type:'dinner'},
+  ], busy:'7/9 Google Marketing Live、7/23 YouTube Works Awards，兩週前開始忙碌'},
+  { id:'aug', name:'8月', en:'AUG', activities:[
+    {date:'8/26 or 8/28',title:'Last Summer Vacation',desc:'把握夏天尾巴，一起出去玩！（看實際狀況，待確認）',type:'dinner'},
+  ], busy:''},
+  { id:'sep', name:'9月', en:'SEP', activities:[
+    {date:'9/9–9/11',title:'Glamping ＋ 中秋烤肉',desc:'爬小山運動＋露營＋中秋烤肉三合一',type:'dinner'},
+    {date:'9/17–9/19',title:'台灣創新技術博覽會',desc:'探索最新科技，一起長知識',type:'learn'},
+  ], busy:'9/25–9/28 中秋節，請提前安排工作'},
+  { id:'oct', name:'10月', en:'OCT', activities:[
+    {date:'10/7',title:'台灣設計展桃園一日遊',desc:'欣賞設計，感受創意氛圍',type:'learn'},
+    {date:'10/30',title:'萬聖節變裝披薩派對',desc:'變裝出動！一起吃披薩過萬聖節',type:'dinner'},
+  ], busy:'10/1 YouTube Brandcast、10/9–10/11 國慶節，請提前安排'},
+  { id:'nov', name:'11月', en:'NOV', special:true, activities:[
+    {date:'11/24–11/25',title:'UPPETA 9 週年慶 🎉',desc:'九週年里程碑！具體活動規劃中，敬請期待',type:'dinner'},
+    {date:'11月',title:'Meet Taipei 創新創業嘉年華',desc:'AI 新創展示，一起去看看有趣的小工具',type:'learn'},
+  ], busy:'11/18 Google Agency Award，請提前安排工作'},
+  { id:'dec', name:'12月', en:'DEC', activities:[
+    {date:'12月',title:'Team Building 目的地 🗺',desc:'敬請期待！目的地投票即將開放，請大家預備一顆出遊之心～',type:'tb'},
+    {date:'12/23',title:'聖誕聚餐＋棉花糖讚美挑戰',desc:'交換禮物＋棉花糖匿名讚美挑戰，溫暖收尾',type:'dinner'},
+  ], busy:'12/4 Sustainability Event，請提前安排工作'},
+];
+
+const VOTE_OPTIONS = [
+  {id:'v1',name:'舒壓工作坊',sub:'健康餐盒＋香氛/捏陶/花藝體驗 · 1 天行程'},
+  {id:'v2',name:'南投日月潭 SUP',sub:'邵族文化體驗＋立槳 SUP · 多天行程'},
+  {id:'v3',name:'苗栗螢火蟲季 Glamping',sub:'泰安・卓蘭・螢火蟲 · 多天行程'},
+  {id:'v4',name:'台中相聲＋調香騎車',sub:'笑出腹肌之旅 · 多天行程'},
+  {id:'v5',name:'台南奇美博物館',sub:'埃及法老特展＋VR 體驗 · 多天行程'},
+];
+
+const DEC_VOTE_OPTIONS = [
+  {id:'d1',name:'屏東南下避冬',sub:'追星季・落山風藝術季・旭海古道'},
+  {id:'d2',name:'小琉球',sub:'珊瑚礁浮潛・海龜・慢活島嶼'},
+  {id:'d3',name:'沖繩',sub:'日式文化・美食・海景'},
+  {id:'d4',name:'澎湖',sub:'冬季秘境・離島風情・海鮮'},
+  {id:'d5',name:'卡丁車變裝賽',sub:'大鵬灣國際卡丁車場體驗'},
+];
+
+const SPORT_OPTIONS = ['空中瑜伽','瑜伽課','機械皮拉提斯','匹克球','抱石','游泳','羽球','跑步'];
+const MEMBERS = ['Max','William','Mii','Bonnie','Haley','Ruth','Eunice','Tina','Chile','Koi'];
+const TYPE_COLORS = { tb:'badge-tb', dinner:'badge-dinner', learn:'badge-learn' };
+const TYPE_LABELS = { tb:'Team Building', dinner:'每月聚餐', learn:'學習活動' };
+const WISH_COLORS = ['#FFF9C4','#E8F5E9','#E3F2FD','#FCE4EC','#F3E5F5','#FFF3E0','#E0F7FA'];
+
+// ─── COUNTDOWN ──────────────────────────────────────────
+function updateCountdown(){
+  const target = new Date('2026-11-24T00:00:00');
+  const now = new Date();
+  const diff = target - now;
+  if(diff<=0){ document.querySelector('.countdown-banner').innerHTML='🎉 今天就是 UPPETA 9 週年！祝我們生日快樂！'; return; }
+  const d = Math.floor(diff/86400000);
+  const h = Math.floor((diff%86400000)/3600000);
+  const m = Math.floor((diff%3600000)/60000);
+  const s = Math.floor((diff%60000)/1000);
+  document.getElementById('cd-days').textContent=String(d).padStart(3,'0');
+  document.getElementById('cd-hrs').textContent=String(h).padStart(2,'0');
+  document.getElementById('cd-min').textContent=String(m).padStart(2,'0');
+  document.getElementById('cd-sec').textContent=String(s).padStart(2,'0');
+}
+setInterval(updateCountdown,1000); updateCountdown();
+
+// ─── MONTH CARDS ────────────────────────────────────────
+function renderMonthCards(){
+  const el = document.getElementById('monthsScroll');
+  el.innerHTML = MONTHS.map(m=>`
+    <div class="month-card${m.special?' special-11':''}" onclick="document.getElementById('detail-${m.id}').scrollIntoView({behavior:'smooth'})">
+      ${m.special?'<div class="star-badge">★</div>':''}
+      <div class="month-num">${m.en}</div>
+      <div class="month-name">${m.name}</div>
+      <div class="month-activity">${m.activities.slice(0,2).map(a=>a.title).join('<br>')}</div>
+      <div>
+        ${[...new Set(m.activities.map(a=>a.type))].map(t=>`<span class="badge ${TYPE_COLORS[t]}">${TYPE_LABELS[t]}</span>`).join('')}
+        ${m.vote?'<span class="badge badge-vote">🗳 投票中</span>':''}
+        ${m.special?'<span class="badge badge-anni">★ 9週年</span>':''}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─── MONTH DETAILS ──────────────────────────────────────
+function renderMonthDetails(){
+  const el = document.getElementById('monthDetails');
+  el.innerHTML = MONTHS.map(m=>`
+    <div class="month-detail" id="detail-${m.id}" style="margin-bottom:40px">
+      <div class="month-detail-header">
+        <h3>${m.name}</h3>
+        ${m.special?'<span class="badge badge-anni" style="font-size:12px">★ UPPETA 9週年</span>':''}
+      </div>
+      ${m.busy?`<div class="busy-bar">⚠️ 外部忙碌期：${m.busy}</div>`:''}
+      <div class="activities-grid">
+        ${m.activities.map(a=>`
+          <div class="activity-card">
+            <div class="activity-date">${a.date}</div>
+            <div class="activity-title">${a.title}</div>
+            <div class="activity-desc">${a.desc}</div>
+            <span class="badge ${TYPE_COLORS[a.type]}" style="margin-top:8px">${TYPE_LABELS[a.type]}</span>
+          </div>
+        `).join('')}
+      </div>
+      ${m.vote?renderVote(m.id):''}
+    </div>
+  `).join('');
+}
+
+// ─── VOTE ───────────────────────────────────────────────
+function getVotes(key){ return JSON.parse(localStorage.getItem('uppeta_votes_'+key)||'{}'); }
+function saveVotes(key,v){ localStorage.setItem('uppeta_votes_'+key,JSON.stringify(v)); }
+function getCustomOpts(key){ return JSON.parse(localStorage.getItem('uppeta_custom_'+key)||'[]'); }
+function saveCustomOpts(key,arr){ localStorage.setItem('uppeta_custom_'+key,JSON.stringify(arr)); }
+// 複選：每人可選多個，存在 _mySelections (array)
+function getMySelections(key){ return JSON.parse(localStorage.getItem('uppeta_sel_'+key)||'[]'); }
+function saveMySelections(key,arr){ localStorage.setItem('uppeta_sel_'+key,JSON.stringify(arr)); }
+
+function getSubmitted(key){ return localStorage.getItem('uppeta_submitted_'+key)==='1'; }
+function setSubmitted(key,v){ localStorage.setItem('uppeta_submitted_'+key, v?'1':'0'); }
+
+function renderVote(monthId){
+  const isMay = monthId==='may';
+  const baseOpts = isMay ? VOTE_OPTIONS : DEC_VOTE_OPTIONS;
+  const label = isMay ? '5 月 Team Building' : '12 月 Team Building 目的地';
+  const key = monthId;
+  const votes = getVotes(key);
+  const mySelections = getMySelections(key);
+  const customOpts = getCustomOpts(key);
+  const allOpts = [...baseOpts, ...customOpts];
+  const submitted = getSubmitted(key);
+  const metaKeys = new Set(['_my','_pending','_custom']);
+  const totalVotes = Object.entries(votes)
+    .filter(([k])=>!metaKeys.has(k))
+    .reduce((s,[,v])=>s+v, 0);
+
+  const optCards = allOpts.map(opt=>{
+    const cnt = votes[opt.id]||0;
+    const pct = totalVotes>0?Math.round(cnt/totalVotes*100):0;
+    const isSelected = mySelections.includes(opt.id);
+    const isCustom = opt.custom;
+    return `
+      <div class="vote-card${isSelected?' selected':''}" onclick="${submitted?'':'toggleVoteSelect(\''+key+'\',\''+opt.id+'\')'}" style="${submitted?'opacity:0.75;pointer-events:none;':'cursor:pointer;'}">
+        <div class="vote-check">${isSelected?'✓':''}</div>
+        <div class="vote-info">
+          <div class="vote-name" style="display:flex;align-items:center;gap:6px;">
+            <span>${opt.name}</span>
+            ${isCustom?'<span style="font-size:10px;background:var(--gold-light);color:#8a6800;padding:1px 6px;border-radius:10px;">自由提案</span>':''}
+            ${isCustom&&!submitted?'<button onclick="event.stopPropagation();deleteCustomVote(\''+key+'\',\''+opt.id+'\')" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:13px;padding:2px 6px;border-radius:4px;" onmouseover="this.style.color=\'var(--coral)\'" onmouseout="this.style.color=\'var(--text-muted)\'">🗑</button>':''}
+          </div>
+          <div class="vote-sub">${opt.sub||''}</div>
+          <div class="vote-bar-wrap"><div class="vote-bar" style="width:${pct}%"></div></div>
+        </div>
+        <div class="vote-count">${cnt} 票</div>
+      </div>`;
+  }).join('');
+
+  const hasSelection = mySelections.length > 0;
+  const actionArea = submitted
+    ? `<div style="margin-top:10px;background:var(--mint-light);border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <span style="font-size:13px;color:#1a7a50;">✅ 已送出！想改變心意？</span>
+        <button onclick="revote('${key}')" style="background:var(--navy);color:white;border:none;border-radius:8px;padding:7px 14px;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;">重新投票</button>
+      </div>`
+    : `<button onclick="submitVotes('${key}')" style="width:100%;margin-top:10px;padding:11px;border-radius:10px;border:none;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;background:${hasSelection?'var(--navy)':'var(--border)'};color:${hasSelection?'white':'var(--text-muted)'};">
+        ✓ 確認送出我的投票${hasSelection?' ('+mySelections.length+'項)':''}
+      </button>`;
+
+  const customArea = submitted ? '' : `
+    <div style="margin-top:14px;padding:14px;background:var(--sky-light);border-radius:var(--radius);border:1.5px dashed var(--sky);">
+      <div style="font-size:12.5px;font-weight:600;color:var(--navy);margin-bottom:8px;">💡 有其他想法？自由提案！</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <input id="custom-name-${key}" placeholder="活動名稱" maxlength="20" style="flex:1;min-width:120px;border:1.5px solid var(--border);border-radius:8px;padding:8px 11px;font-family:inherit;font-size:13px;outline:none;">
+        <input id="custom-sub-${key}" placeholder="一行簡介（選填）" maxlength="30" style="flex:2;min-width:160px;border:1.5px solid var(--border);border-radius:8px;padding:8px 11px;font-family:inherit;font-size:13px;outline:none;">
+        <button onclick="addCustomVote('${key}')" style="background:var(--sky);color:white;border:none;border-radius:8px;padding:8px 16px;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;">加入並選取</button>
+      </div>
+    </div>`;
+
+  return `
+    <div class="vote-section">
+      <div class="vote-title">🗳 ${label} 投票 <span style="font-size:12px;color:var(--text-muted);font-weight:400">（可複選，共 ${totalVotes} 票）</span></div>
+      <div class="vote-cards">${optCards}</div>
+      ${actionArea}
+      ${customArea}
+    </div>`;
+}
+
+function toggleVoteSelect(key, id){
+  const sel = getMySelections(key);
+  const idx = sel.indexOf(id);
+  if(idx>=0) sel.splice(idx,1); else sel.push(id);
+  saveMySelections(key, sel);
+  renderMonthDetails();
+}
+
+function submitVotes(key){
+  const sel = getMySelections(key);
+  if(sel.length===0){ alert('請先勾選至少一個選項！'); return; }
+  const votes = getVotes(key);
+  const allOpts = key==='may' ? [...VOTE_OPTIONS,...getCustomOpts(key)] : [...DEC_VOTE_OPTIONS,...getCustomOpts(key)];
+  sel.forEach(id=>{
+    votes[id] = (votes[id]||0)+1;
+    const opt = allOpts.find(o=>o.id===id);
+    trackEvent({ action:'vote', month:key, optionId:id, optionName:opt?opt.name:id, action_type:'vote' });
+  });
+  saveVotes(key, votes);
+  setSubmitted(key, true);
+  renderMonthDetails();
+}
+
+function revote(key){
+  const sel = getMySelections(key);
+  const votes = getVotes(key);
+  const allOpts = key==='may' ? [...VOTE_OPTIONS,...getCustomOpts(key)] : [...DEC_VOTE_OPTIONS,...getCustomOpts(key)];
+  sel.forEach(id=>{
+    if(votes[id]>0) votes[id]--;
+    if(votes[id]<=0) delete votes[id];
+    const opt = allOpts.find(o=>o.id===id);
+    trackEvent({ action:'vote', month:key, optionId:id, optionName:opt?opt.name:id, action_type:'unvote' });
+  });
+  saveVotes(key, votes);
+  saveMySelections(key, []);
+  setSubmitted(key, false);
+  renderMonthDetails();
+}
+
+function deleteCustomVote(key, id){
+  let customs = getCustomOpts(key);
+  customs = customs.filter(o=>o.id!==id);
+  saveCustomOpts(key, customs);
+  const votes = getVotes(key);
+  delete votes[id];
+  saveVotes(key, votes);
+  saveMySelections(key, getMySelections(key).filter(s=>s!==id));
+  renderMonthDetails();
+}
+
+function addCustomVote(key){
+  const nameEl = document.getElementById('custom-name-'+key);
+  const subEl = document.getElementById('custom-sub-'+key);
+  const name = nameEl.value.trim();
+  const sub = subEl ? subEl.value.trim() : '';
+  if(!name){ nameEl.focus(); return; }
+  const customs = getCustomOpts(key);
+  const id = 'c_'+key+'_'+Date.now();
+  customs.push({id, name, sub, custom:true});
+  saveCustomOpts(key, customs);
+  const sel = getMySelections(key);
+  sel.push(id);
+  saveMySelections(key, sel);
+  nameEl.value=''; if(subEl) subEl.value='';
+  renderMonthDetails();
+}
+
+function selectVote(key,id){ toggleVoteSelect(key,id); }
+function castVote(key){ submitVotes(key); }
+
+// ─── SPINNER ────────────────────────────────────────────
+const canvas = document.getElementById('spinnerCanvas');
+const ctx = canvas.getContext('2d');
+let spinning = false, angle = 0, spinData = {};
+
+function getSpinData(){ return JSON.parse(localStorage.getItem('uppeta_spin')||'{"done":[],"history":[]}'); }
+function saveSpinData(d){ localStorage.setItem('uppeta_spin',JSON.stringify(d)); }
+
+const SEGMENT_COLORS = ['#1F456E','#2a6099','#3476b5','#4A90D9','#1e7a6e','#2ECC8F','#27ae78','#1abc9c','#1F456E','#2a6099','#3476b5','#4A90D9'];
+
+function drawWheel(){
+  const d = getSpinData();
+  const R = 138, cx = 140, cy = 140;
+  ctx.clearRect(0,0,280,280);
+  MEMBERS.forEach((name,i)=>{
+    const N = MEMBERS.length;
+    const start = (i*2*Math.PI/N)+angle-Math.PI/2;
+    const end = start+2*Math.PI/N;
+    const isDone = d.done.includes(name);
+    ctx.beginPath(); ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,R,start,end);
+    ctx.closePath();
+    ctx.fillStyle = isDone?'#c8d0db':SEGMENT_COLORS[i];
+    ctx.fill();
+    ctx.strokeStyle='white'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.rotate(start+Math.PI/N);
+    ctx.textAlign='right';
+    ctx.fillStyle=isDone?'#8a96a3':'white';
+    ctx.font=`${isDone?'300':'500'} 12px "DM Sans","Noto Sans TC",sans-serif`;
+    ctx.fillText(name,R-10,4);
+    ctx.restore();
+  });
+  // Center circle
+  ctx.beginPath(); ctx.arc(cx,cy,24,0,2*Math.PI);
+  ctx.fillStyle='white'; ctx.fill();
+  ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=2; ctx.stroke();
+  // Pointer
+  ctx.beginPath(); ctx.moveTo(cx+R-8,cy-8); ctx.lineTo(cx+R+12,cy); ctx.lineTo(cx+R-8,cy+8);
+  ctx.fillStyle=SEGMENT_COLORS[0]; ctx.fill();
+}
+
+function spinWheel(){
+  const d = getSpinData();
+  const avail = MEMBERS.filter(m=>!d.done.includes(m));
+  if(avail.length<2){ alert('所有人都已出場過！請重置紀錄後再次抽籤。'); return; }
+  spinning=true;
+  document.getElementById('spinBtn').disabled=true;
+  const totalSpin = 6*2*Math.PI + Math.random()*2*Math.PI;
+  const duration = 3500;
+  const start = performance.now();
+  const startAngle = angle;
+  function ease(t){ return t<0.5?4*t*t*t:(t-1)*(2*t-2)*(2*t-2)+1; }
+  function frame(now){
+    const elapsed = now-start;
+    const progress = Math.min(elapsed/duration,1);
+    angle = startAngle + totalSpin*ease(progress);
+    drawWheel();
+    if(progress<1){ requestAnimationFrame(frame); }
+    else{
+      spinning=false;
+      document.getElementById('spinBtn').disabled=false;
+      // determine winner
+      const N = MEMBERS.length;
+      const normAngle = ((-(angle-Math.PI/2))%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
+      const idx = Math.floor(normAngle/(2*Math.PI/N))%N;
+      const winner1 = MEMBERS[idx];
+      let secondIdx = (idx+Math.floor(Math.random()*(MEMBERS.length-1))+1)%MEMBERS.length;
+      while(d.done.includes(MEMBERS[secondIdx])&&MEMBERS[secondIdx]!==winner1){
+        secondIdx=(secondIdx+1)%MEMBERS.length;
+      }
+      const winner2 = MEMBERS[secondIdx];
+      const winners = [...new Set([winner1,winner2])].slice(0,2);
+      winners.forEach(w=>{ if(!d.done.includes(w)) d.done.push(w); });
+      const monthNames = ['四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+      const month = monthNames[d.history.length]||`第${d.history.length+1}次`;
+      d.history.push({month, names:winners});
+      saveSpinData(d);
+      // 追蹤抽籤結果
+      trackEvent({ action:'spinner', month, names:winners });
+      document.getElementById('winnerDisplay').innerHTML=`
+        <div class="winner-names">
+          <div class="label">🎉 本月分享者</div>
+          <div class="names">${winners.join(' & ')}</div>
+        </div>`;
+      renderSpinnerUI();
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+function renderSpinnerUI(){
+  const d = getSpinData();
+  const pr = document.getElementById('peopleRow');
+  pr.innerHTML = MEMBERS.map(m=>`<span class="person-chip${d.done.includes(m)?' done':''}">${m}</span>`).join('');
+  const hl = document.getElementById('historyList');
+  if(d.history.length===0){
+    hl.innerHTML='<div style="color:rgba(255,255,255,0.3);font-size:12.5px;padding:8px;">尚無紀錄</div>';
+  } else {
+    hl.innerHTML = d.history.slice().reverse().map(h=>`
+      <div class="history-item">
+        <span class="history-month">${h.month}</span>
+        <span>${h.names.join(' & ')}</span>
+      </div>`).join('');
+  }
+  drawWheel();
+}
+
+function resetSpinner(){
+  const btn = document.getElementById('resetBtn');
+  if(btn.dataset.confirm === '1'){
+    localStorage.removeItem('uppeta_spin');
+    angle = 0;
+    btn.dataset.confirm = '0';
+    btn.textContent = '🗑 重置所有紀錄';
+    renderSpinnerUI();
+    document.getElementById('winnerDisplay').innerHTML='<div style="color:rgba(255,255,255,0.35);font-size:13px;">按下按鈕開始抽籤</div>';
+  } else {
+    btn.dataset.confirm = '1';
+    btn.textContent = '⚠️ 再按一次確認重置';
+    btn.style.color = '#ff8080';
+    btn.style.borderColor = '#ff8080';
+    setTimeout(()=>{
+      btn.dataset.confirm = '0';
+      btn.textContent = '🗑 重置所有紀錄';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }, 3000);
+  }
+}
+
+// ─── WISHLIST ───────────────────────────────────────────
+function getWishes(){ return JSON.parse(localStorage.getItem('uppeta_wishes')||'[]'); }
+function saveWishes(w){ localStorage.setItem('uppeta_wishes',JSON.stringify(w)); }
+
+function renderWishes(){
+  const wishes = getWishes();
+  const el = document.getElementById('wishGrid');
+  if(wishes.length===0){
+    el.innerHTML='<div style="color:var(--text-muted);font-size:14px;grid-column:1/-1;padding:20px 0;">還沒有心願，來第一個分享吧！🌱</div>';
+    return;
+  }
+  el.innerHTML = wishes.map((w,i)=>`
+    <div class="wish-note" style="background:${WISH_COLORS[i%WISH_COLORS.length]}">
+      <div class="wish-author">${w.date}</div>
+      <div class="wish-text">${w.text}</div>
+      <button class="wish-like" onclick="likeWish(${i})">❤️ ${w.likes||0}</button>
+    </div>`).join('');
+}
+function addWish(){
+  const text = document.getElementById('wishText').value.trim();
+  if(!text) return;
+  const wishes = getWishes();
+  const now = new Date();
+  const date = `${now.getMonth()+1}/${now.getDate()}`;
+  wishes.unshift({date, text, likes:0});
+  saveWishes(wishes);
+  document.getElementById('wishText').value='';
+  // 追蹤心願
+  trackEvent({ action:'wish', text, action_type:'add', likes:0 });
+  renderWishes();
+}
+function likeWish(i){
+  const wishes = getWishes();
+  wishes[i].likes=(wishes[i].likes||0)+1;
+  saveWishes(wishes);
+  // 追蹤附議
+  trackEvent({ action:'wish', text:wishes[i].text, action_type:'like', likes:wishes[i].likes });
+  renderWishes();
+}
+
+// ─── SPORT FAB ──────────────────────────────────────────
+const SPORT_ACTIVITY_LIST = [
+  {name:'空中瑜伽', emoji:'🧘'},
+  {name:'瑜伽課',   emoji:'🧘'},
+  {name:'機械皮拉提斯', emoji:'💪'},
+  {name:'匹克球',   emoji:'🏓'},
+  {name:'抱石',     emoji:'🧗'},
+  {name:'游泳',     emoji:'🏊'},
+  {name:'羽球',     emoji:'🏸'},
+  {name:'跑步',     emoji:'🏃'},
+  {name:'健身房',   emoji:'🏋️'},
+  {name:'騎腳踏車', emoji:'🚴'},
+];
+
+function getWeekKey(){ const d=new Date(); const jan1=new Date(d.getFullYear(),0,1); return `${d.getFullYear()}-W${Math.ceil(((d-jan1)/86400000+jan1.getDay()+1)/7)}`; }
+function getSportData(){ return JSON.parse(localStorage.getItem('uppeta_sport2')||'{}'); }
+function saveSportData(d){ localStorage.setItem('uppeta_sport2',JSON.stringify(d)); }
+
+function toggleSportPanel(){
+  document.getElementById('sportPanel').classList.toggle('open');
+  if(document.getElementById('sportPanel').classList.contains('open')){ renderSportStatus(); renderActivityList(); }
+}
+function switchTab(tab,btn){
+  document.querySelectorAll('.panel-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-status').style.display=tab==='status'?'block':'none';
+  document.getElementById('tab-vote').style.display=tab==='vote'?'block':'none';
+}
+
+function buildGCalUrl(g){
+  const title = encodeURIComponent('🏃 UPPETA 運動揪團：'+g.item);
+  const details = encodeURIComponent('公司報銷（5人成團）！\n地點：'+(g.place||'待確認')+'\n發起人：'+(g.organizer||'匿名')+'\n透過 UPPETA 2026 活動平台發起');
+  const location = encodeURIComponent(g.place||'');
+  let dateStr = g.isoDate || new Date().toISOString().split('T')[0];
+  const start = dateStr.replace(/-/g,'')+'T'+(g.startHHMM||'190000');
+  const end   = dateStr.replace(/-/g,'')+'T'+(g.endHHMM||'210000');
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}&location=${location}`;
+}
+
+function renderSportStatus(){
+  const wk = getWeekKey();
+  const data = getSportData();
+  const groups = (data[wk]||[]);
+  const el = document.getElementById('tab-status');
+  const totalJoined = groups.reduce((s,g)=>s+g.registrants.length,0);
+  updateFabBadge(totalJoined);
+
+  if(groups.length===0){
+    el.innerHTML=`
+      <div style="text-align:center;padding:16px 0 12px;color:var(--text-muted);font-size:13px;">
+        <div style="font-size:28px;margin-bottom:6px;">🏃</div>
+        本週還沒有揪團，你來第一個發起吧！
+      </div>
+      <button class="join-btn" onclick="document.getElementById('initiateModal').classList.add('open')">＋ 發起揪團</button>`;
+    return;
+  }
+
+  // Group by date, sorted chronologically
+  const byDate = {};
+  groups.forEach((g,i)=>{
+    const key = g.isoDate||'nodate';
+    if(!byDate[key]) byDate[key]=[];
+    byDate[key].push({...g, _idx:i});
+  });
+  const sortedDates = Object.keys(byDate).sort((a,b)=>{
+    if(a==='nodate') return 1; if(b==='nodate') return -1;
+    return a.localeCompare(b);
+  });
+
+  const WEEKDAYS = ['日','一','二','三','四','五','六'];
+  const dateBlocks = sortedDates.map(dateKey=>{
+    let dateLabel = '';
+    if(dateKey==='nodate'){
+      dateLabel = '日期待定';
+    } else {
+      const d = new Date(dateKey+'T00:00:00');
+      const today = new Date(); today.setHours(0,0,0,0);
+      const diff = Math.round((d-today)/86400000);
+      const wd = WEEKDAYS[d.getDay()];
+      const mmdd = `${d.getMonth()+1}/${d.getDate()}`;
+      if(diff===0) dateLabel=`今天 ${mmdd}（週${wd}）`;
+      else if(diff===1) dateLabel=`明天 ${mmdd}（週${wd}）`;
+      else if(diff>0) dateLabel=`${mmdd}（週${wd}）`;
+      else dateLabel=`${mmdd}（週${wd}）`;
+    }
+
+    const cards = byDate[dateKey].map(g=>{
+      const i = g._idx;
+      const count = g.registrants.length;
+      const pct = Math.min(count/5*100,100);
+      const full = count>=5;
+      const gcalUrl = buildGCalUrl(g);
+      const myKey = 'sport_joined_'+wk+'_'+i;
+      const joined = localStorage.getItem(myKey)==='1';
+      return `
+        <div style="background:white;border-radius:10px;padding:11px 13px;margin-bottom:8px;border:1.5px solid ${full?'var(--mint)':'var(--border)'};">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px;">
+            <div style="display:flex;align-items:center;gap:7px;">
+              <span style="font-size:15px;font-weight:600;color:var(--navy);">${g.item}</span>
+              ${g.time?`<span style="font-size:11px;color:var(--text-muted);">⏰ ${g.time}</span>`:''}
+            </div>
+            ${full?'<span style="background:var(--mint-light);color:#1a7a50;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;flex-shrink:0;">✓ 成團</span>':'<span style="background:var(--sky-light);color:var(--sky);font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;flex-shrink:0;">招募中</span>'}
+          </div>
+          ${g.place||g.organizer?`<div style="font-size:11.5px;color:var(--text-muted);margin-bottom:7px;">${g.place?'📍'+g.place+'　':''}${g.organizer?'👤'+g.organizer:''}</div>`:''}
+          <div style="margin-bottom:6px;">
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:3px;">
+              <span style="display:flex;flex-wrap:wrap;gap:3px;">${g.registrants.map(r=>`<span style="background:var(--bg);border-radius:20px;padding:1px 7px;">${r||'匿名'}</span>`).join('')}${g.registrants.length===0?'<span style="opacity:0.5">還沒有人報名</span>':''}</span>
+              <span style="flex-shrink:0;margin-left:6px;font-weight:500;color:${full?'#1a7a50':'var(--sky)'};">${count}/5</span>
+            </div>
+            <div style="background:var(--border);border-radius:6px;height:5px;">
+              <div style="height:5px;border-radius:6px;background:${full?'var(--mint)':'var(--sky)'};width:${pct}%;transition:width 0.4s;"></div>
+            </div>
+            ${!full?`<div style="font-size:10.5px;color:var(--text-muted);margin-top:3px;">還差 ${Math.max(0,5-count)} 人成團解鎖 Calendar 🔒</div>`:''}
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button onclick="joinGroup(${i})" style="flex:1;padding:7px;border-radius:8px;border:none;font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;transition:all 0.2s;background:${joined?'var(--coral-light)':'var(--navy)'};color:${joined?'var(--coral)':'white'};">
+              ${joined?'✕ 取消報名':'🙋 我要參加'}
+            </button>
+            ${full?`<a href="${gcalUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:7px;border-radius:8px;background:var(--sky-light);border:1.5px solid #c2ddf5;color:var(--navy);font-size:12.5px;font-weight:500;text-decoration:none;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              加入 Calendar 🔓
+            </a>`:''}
+          </div>
+        </div>`;
+    }).join('');
+
+    return `
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+          <div style="width:3px;height:16px;background:var(--navy);border-radius:2px;flex-shrink:0;"></div>
+          <span style="font-size:12px;font-weight:600;color:var(--navy);letter-spacing:0.03em;">${dateLabel}</span>
+        </div>
+        ${cards}
+      </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    ${dateBlocks}
+    <button class="join-btn" style="background:var(--sky);margin-top:4px;" onclick="document.getElementById('initiateModal').classList.add('open')">＋ 再發起一個揪團</button>`;
+}
+
+function joinGroup(idx){
+  const wk = getWeekKey();
+  const data = getSportData();
+  const groups = data[wk]||[];
+  const g = groups[idx];
+  if(!g) return;
+  const myKey = 'sport_joined_'+wk+'_'+idx;
+  const joined = localStorage.getItem(myKey)==='1';
+  if(joined){
+    g.registrants = g.registrants.slice(0,-1);
+    localStorage.removeItem(myKey);
+  } else {
+    // open join modal with group index
+    document.getElementById('joinGroupIdx').value = idx;
+    document.getElementById('joinModal').classList.add('open');
+    return;
+  }
+  saveSportData(data);
+  renderSportStatus();
+}
+
+function updateFabBadge(n){
+  const b=document.getElementById('fabBadge');
+  b.style.display=n>0?'flex':'none'; b.textContent=n;
+}
+
+function openJoinModal(){ document.getElementById('joinModal').classList.add('open'); }
+function closeJoinModal(){ document.getElementById('joinModal').classList.remove('open'); }
+function confirmJoin(){
+  const name = document.getElementById('joinName').value.trim();
+  const idx = parseInt(document.getElementById('joinGroupIdx').value)||0;
+  const wk = getWeekKey();
+  const data = getSportData();
+  const groups = data[wk]||[];
+  if(!groups[idx]) return;
+  groups[idx].registrants.push(name||'');
+  localStorage.setItem('sport_joined_'+wk+'_'+idx,'1');
+  saveSportData(data);
+  // 追蹤報名
+  const g = groups[idx];
+  trackEvent({ action:'sport_join', weekKey:wk, item:g.item, isoDate:g.isoDate, time:g.time, place:g.place, organizer:g.organizer, name:name||'匿名夥伴', action_type:'join' });
+  closeJoinModal();
+  document.getElementById('joinName').value='';
+  renderSportStatus();
+}
+
+function confirmInitiate(){
+  const item = document.getElementById('sportItem').value.trim();
+  const time = document.getElementById('sportTime').value.trim();
+  const place = document.getElementById('sportPlace').value.trim();
+  const dateInput = document.getElementById('sportDate').value;
+  const organizer = document.getElementById('sportOrganizer').value.trim();
+  if(!item||!time){ alert('請填寫運動項目和時間'); return; }
+  const hmMatch = time.match(/(\d{1,2}):(\d{2})/);
+  let startHHMM='190000', endHHMM='210000';
+  if(hmMatch){
+    const h=hmMatch[1].padStart(2,'0'), m=hmMatch[2];
+    startHHMM=h+m+'00';
+    endHHMM=String((parseInt(h)+2)%24).padStart(2,'0')+m+'00';
+  }
+  const wk = getWeekKey();
+  const data = getSportData();
+  if(!data[wk]) data[wk]=[];
+  data[wk].push({item, time, place, isoDate:dateInput, startHHMM, endHHMM, organizer, registrants:[]});
+  saveSportData(data);
+  // 追蹤發起揪團
+  trackEvent({ action:'sport_create', weekKey:wk, item, time, place, isoDate:dateInput, organizer });
+  document.getElementById('initiateModal').classList.remove('open');
+  ['sportItem','sportTime','sportPlace','sportDate','sportOrganizer'].forEach(id=>document.getElementById(id).value='');
+  renderSportStatus();
+}
+
+function renderActivityList(){
+  const el = document.getElementById('tab-vote');
+  el.innerHTML=`
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">點選活動，自動帶入發起表單 👇</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
+      ${SPORT_ACTIVITY_LIST.map(a=>`
+        <div onclick="pickActivity('${a.name}')" style="display:flex;align-items:center;gap:7px;padding:9px 11px;border-radius:10px;background:var(--bg);border:1.5px solid var(--border);cursor:pointer;font-size:13px;font-weight:500;color:var(--navy);transition:all 0.15s;"
+          onmouseover="this.style.borderColor='var(--sky)';this.style.background='var(--sky-light)'"
+          onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg)'">
+          <span style="font-size:16px;">${a.emoji}</span>${a.name}
+        </div>`).join('')}
+    </div>
+    <div style="display:flex;gap:6px;">
+      <input id="customActivityInput" placeholder="其他運動..." maxlength="20"
+        style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;outline:none;"
+        onkeydown="if(event.key==='Enter')pickCustomActivity()">
+      <button onclick="pickCustomActivity()" style="background:var(--navy);color:white;border:none;border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit;">帶入</button>
+    </div>`;
+}
+
+function pickActivity(name){
+  document.getElementById('sportItem').value = name;
+  document.getElementById('initiateModal').classList.add('open');
+  switchTab('status', document.querySelector('.panel-tab'));
+}
+function pickCustomActivity(){
+  const val = document.getElementById('customActivityInput').value.trim();
+  if(!val) return;
+  pickActivity(val);
+}
+
+// ─── INIT ───────────────────────────────────────────────
+// 版本號清除：只在第一次載入新版本時清除舊資料
+const VOTE_VERSION = 'v5';
+if(localStorage.getItem('uppeta_vote_ver') !== VOTE_VERSION){
+  ['may','dec'].forEach(k=>{
+    localStorage.removeItem('uppeta_votes_'+k);
+    localStorage.removeItem('uppeta_sel_'+k);
+    localStorage.removeItem('uppeta_custom_'+k);
+    localStorage.removeItem('uppeta_submitted_'+k);
+  });
+  localStorage.setItem('uppeta_vote_ver', VOTE_VERSION);
+}
+renderMonthCards();
+renderMonthDetails();
+renderSpinnerUI();
+renderWishes();
+renderSportStatus();
+renderActivityList();
+</script>
+</body>
+</html>
