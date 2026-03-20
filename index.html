@@ -613,11 +613,12 @@ const MONTHS = [
 ];
 
 const VOTE_OPTIONS = [
-  {id:'v1',name:'舒壓工作坊',sub:'健康餐盒＋香氛/捏陶/花藝體驗 · 1 天行程'},
-  {id:'v2',name:'南投日月潭 SUP',sub:'邵族文化體驗＋立槳 SUP · 多天行程'},
-  {id:'v3',name:'苗栗螢火蟲季 Glamping',sub:'泰安・卓蘭・螢火蟲 · 多天行程'},
-  {id:'v4',name:'台中相聲＋調香騎車',sub:'笑出腹肌之旅 · 多天行程'},
-  {id:'v5',name:'台南奇美博物館',sub:'埃及法老特展＋VR 體驗 · 多天行程'},
+  {id:'v1',name:'舒壓工作坊',sub:'健康餐盒＋香氛/捏陶/花藝體驗'},
+  {id:'v2',name:'南投日月潭 SUP',sub:'邵族文化體驗＋立槳 SUP'},
+  {id:'v3',name:'苗栗螢火蟲季 Glamping',sub:'泰安・卓蘭・螢火蟲'},
+  {id:'v4',name:'台中相聲＋調香騎車',sub:'笑出腹肌之旅'},
+  {id:'v5',name:'台南奇美博物館',sub:'埃及法老特展＋VR 體驗'},
+  {id:'v6',name:'【靈感與工藝】宜蘭冬山',sub:'熱氣球賞稻浪・青花瓷拓繪・中興文創藍染/原民編織'},
 ];
 
 const DEC_VOTE_OPTIONS = [
@@ -1259,7 +1260,7 @@ function pickCustomActivity(){
 
 // ─── INIT ───────────────────────────────────────────────
 // 版本號清除：只在第一次載入新版本時清除舊資料
-const VOTE_VERSION = 'v5';
+const VOTE_VERSION = 'v6';
 if(localStorage.getItem('uppeta_vote_ver') !== VOTE_VERSION){
   ['may','dec'].forEach(k=>{
     localStorage.removeItem('uppeta_votes_'+k);
