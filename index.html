@@ -574,7 +574,33 @@ function trackEvent(payload){
     mode:'no-cors',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify(payload)
-  }).catch(()=>{}); // 靜默失敗，不影響前端體驗
+  }).catch(()=>{});
+}
+
+// ─── 從 Sheet 讀取資料（同步）────────────────────────
+async function fetchFromSheet(params){
+  try {
+    const url = APPS_SCRIPT_URL + '?' + new URLSearchParams(params);
+    const res = await fetch(url);
+    const data = await res.json();
+    return data;
+  } catch(e){ return null; }
+}
+
+async function syncVotesFromSheet(key){
+  const data = await fetchFromSheet({ action:'get_votes', month:key });
+  if(!data || !data.ok) return;
+  // 把 Sheet 的票數寫入 localStorage（覆蓋），保留 _my 和 _pending
+  const local = getVotes(key);
+  const merged = { _my: local._my, _pending: local._pending };
+  Object.entries(data.votes).forEach(([id, cnt])=>{ merged[id] = cnt; });
+  saveVotes(key, merged);
+}
+
+async function syncWishesFromSheet(){
+  const data = await fetchFromSheet({ action:'get_wishes' });
+  if(!data || !data.ok || !data.wishes) return;
+  saveWishes(data.wishes);
 }
 
 // ─── DATA ───────────────────────────────────────────────
@@ -613,12 +639,9 @@ const MONTHS = [
 ];
 
 const VOTE_OPTIONS = [
-  {id:'v1',name:'舒壓工作坊',sub:'健康餐盒＋香氛/捏陶/花藝體驗'},
   {id:'v2',name:'南投日月潭 SUP',sub:'邵族文化體驗＋立槳 SUP'},
   {id:'v3',name:'苗栗螢火蟲季 Glamping',sub:'泰安・卓蘭・螢火蟲'},
-  {id:'v4',name:'台中相聲＋調香騎車',sub:'笑出腹肌之旅'},
-  {id:'v5',name:'台南奇美博物館',sub:'埃及法老特展＋VR 體驗'},
-  {id:'v6',name:'宜蘭熱氣球Day',sub:'【靈感與工藝】熱氣球賞稻浪・青花瓷拓繪・中興文創藍染/原民編織'},
+  {id:'v6',name:'宜蘭熱氣球 Day',sub:'【靈感與工藝】熱氣球賞稻浪、青花瓷拓繪、中興文創藍染/編織'},
 ];
 
 const DEC_VOTE_OPTIONS = [
@@ -977,40 +1000,69 @@ function resetSpinner(){
 // ─── WISHLIST ───────────────────────────────────────────
 function getWishes(){ return JSON.parse(localStorage.getItem('uppeta_wishes')||'[]'); }
 function saveWishes(w){ localStorage.setItem('uppeta_wishes',JSON.stringify(w)); }
+function getLiked(){ return JSON.parse(localStorage.getItem('uppeta_liked')||'[]'); }
+function saveLiked(l){ localStorage.setItem('uppeta_liked',JSON.stringify(l)); }
 
 function renderWishes(){
   const wishes = getWishes();
+  const liked = getLiked();
   const el = document.getElementById('wishGrid');
   if(wishes.length===0){
     el.innerHTML='<div style="color:var(--text-muted);font-size:14px;grid-column:1/-1;padding:20px 0;">還沒有心願，來第一個分享吧！🌱</div>';
     return;
   }
-  el.innerHTML = wishes.map((w,i)=>`
-    <div class="wish-note" style="background:${WISH_COLORS[i%WISH_COLORS.length]}">
-      <div class="wish-author">${w.date}</div>
-      <div class="wish-text">${w.text}</div>
-      <button class="wish-like" onclick="likeWish(${i})">❤️ ${w.likes||0}</button>
-    </div>`).join('');
+  el.innerHTML = wishes.map((w,i)=>{
+    const hasLiked = liked.includes(w.id||i);
+    return `
+      <div class="wish-note" style="background:${WISH_COLORS[i%WISH_COLORS.length]};position:relative;">
+        <div class="wish-author">${w.date}</div>
+        <div class="wish-text" style="padding-bottom:28px;">${w.text}</div>
+        <div style="position:absolute;bottom:10px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:center;">
+          <button onclick="likeWish(${i})" style="background:${hasLiked?'rgba(255,100,100,0.2)':'rgba(255,255,255,0.5)'};border:none;border-radius:20px;padding:3px 9px;font-size:12px;cursor:${hasLiked?'default':'pointer'};display:flex;align-items:center;gap:3px;transition:all 0.2s;" ${hasLiked?'disabled':''}>
+            ${hasLiked?'❤️':'🤍'} ${w.likes||0}
+          </button>
+          <button onclick="deleteWish(${i})" title="刪除這個心願" style="background:none;border:none;cursor:pointer;color:rgba(0,0,0,0.25);font-size:13px;padding:2px 4px;border-radius:4px;transition:all 0.2s;" onmouseover="this.style.color='var(--coral)'" onmouseout="this.style.color='rgba(0,0,0,0.25)'">🗑</button>
+        </div>
+      </div>`; 
+  }).join('');
 }
+
 function addWish(){
   const text = document.getElementById('wishText').value.trim();
   if(!text) return;
   const wishes = getWishes();
   const now = new Date();
   const date = `${now.getMonth()+1}/${now.getDate()}`;
-  wishes.unshift({date, text, likes:0});
+  const id = Date.now();
+  wishes.unshift({id, date, text, likes:0});
   saveWishes(wishes);
   document.getElementById('wishText').value='';
-  // 追蹤心願
-  trackEvent({ action:'wish', text, action_type:'add', likes:0 });
+  trackEvent({ action:'wish_add', id, date, text });
   renderWishes();
 }
+
 function likeWish(i){
   const wishes = getWishes();
+  const liked = getLiked();
+  const id = wishes[i].id||i;
+  if(liked.includes(id)) return;
   wishes[i].likes=(wishes[i].likes||0)+1;
+  liked.push(id);
   saveWishes(wishes);
-  // 追蹤附議
-  trackEvent({ action:'wish', text:wishes[i].text, action_type:'like', likes:wishes[i].likes });
+  saveLiked(liked);
+  trackEvent({ action:'wish_like', id });
+  renderWishes();
+}
+
+function deleteWish(i){
+  const wishes = getWishes();
+  const liked = getLiked();
+  const id = wishes[i].id||i;
+  const newLiked = liked.filter(l=>l!==id);
+  trackEvent({ action:'wish_delete', id });
+  wishes.splice(i,1);
+  saveWishes(wishes);
+  saveLiked(newLiked);
   renderWishes();
 }
 
@@ -1115,7 +1167,10 @@ function renderSportStatus(){
               <span style="font-size:15px;font-weight:600;color:var(--navy);">${g.item}</span>
               ${g.time?`<span style="font-size:11px;color:var(--text-muted);">⏰ ${g.time}</span>`:''}
             </div>
-            ${full?'<span style="background:var(--mint-light);color:#1a7a50;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;flex-shrink:0;">✓ 成團</span>':'<span style="background:var(--sky-light);color:var(--sky);font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;flex-shrink:0;">招募中</span>'}
+            <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+              ${full?'<span style="background:var(--mint-light);color:#1a7a50;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;">✓ 成團</span>':'<span style="background:var(--sky-light);color:var(--sky);font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;">招募中</span>'}
+              <button onclick="deleteGroup(${i})" title="刪除這個揪團" style="background:none;border:none;cursor:pointer;color:rgba(0,0,0,0.2);font-size:13px;padding:2px 4px;border-radius:4px;line-height:1;transition:color 0.2s;" onmouseover="this.style.color='var(--coral)'" onmouseout="this.style.color='rgba(0,0,0,0.2)'">🗑</button>
+            </div>
           </div>
           ${g.place||g.organizer?`<div style="font-size:11.5px;color:var(--text-muted);margin-bottom:7px;">${g.place?'📍'+g.place+'　':''}${g.organizer?'👤'+g.organizer:''}</div>`:''}
           <div style="margin-bottom:6px;">
@@ -1155,6 +1210,16 @@ function renderSportStatus(){
     <button class="join-btn" style="background:var(--sky);margin-top:4px;" onclick="document.getElementById('initiateModal').classList.add('open')">＋ 再發起一個揪團</button>`;
 }
 
+function deleteGroup(idx){
+  const wk = getWeekKey();
+  const data = getSportData();
+  if(!data[wk]) return;
+  data[wk].splice(idx, 1);
+  for(let j=0; j<20; j++) localStorage.removeItem('sport_joined_'+wk+'_'+j);
+  saveSportData(data);
+  renderSportStatus();
+}
+
 function joinGroup(idx){
   const wk = getWeekKey();
   const data = getSportData();
@@ -1167,7 +1232,6 @@ function joinGroup(idx){
     g.registrants = g.registrants.slice(0,-1);
     localStorage.removeItem(myKey);
   } else {
-    // open join modal with group index
     document.getElementById('joinGroupIdx').value = idx;
     document.getElementById('joinModal').classList.add('open');
     return;
@@ -1259,8 +1323,7 @@ function pickCustomActivity(){
 }
 
 // ─── INIT ───────────────────────────────────────────────
-// 版本號清除：只在第一次載入新版本時清除舊資料
-const VOTE_VERSION = 'v6';
+const VOTE_VERSION = 'v7';
 if(localStorage.getItem('uppeta_vote_ver') !== VOTE_VERSION){
   ['may','dec'].forEach(k=>{
     localStorage.removeItem('uppeta_votes_'+k);
@@ -1270,12 +1333,26 @@ if(localStorage.getItem('uppeta_vote_ver') !== VOTE_VERSION){
   });
   localStorage.setItem('uppeta_vote_ver', VOTE_VERSION);
 }
+
+// 先用本地資料快速顯示，再從 Sheet 同步更新
 renderMonthCards();
 renderMonthDetails();
 renderSpinnerUI();
 renderWishes();
 renderSportStatus();
 renderActivityList();
+
+// 非同步從 Sheet 讀取最新資料，讀完後更新畫面
+(async () => {
+  // 同步投票票數
+  await syncVotesFromSheet('may');
+  await syncVotesFromSheet('dec');
+  renderMonthDetails(); // 重新渲染顯示最新票數
+
+  // 同步心願牆
+  await syncWishesFromSheet();
+  renderWishes(); // 重新渲染顯示最新心願
+})();
 </script>
 </body>
 </html>
