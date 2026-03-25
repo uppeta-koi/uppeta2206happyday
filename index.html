@@ -495,7 +495,7 @@ footer {
   <div class="section-header">
     <h2>夥伴心願牆 🌸</h2>
   </div>
-  <p style="color:var(--text-muted);margin-bottom:20px;font-size:14px;">你想和大家一起做什麼？寫下來，讓大家附議！</p>
+  <p style="color:var(--text-muted);margin-bottom:20px;font-size:14px;">你想和大家一起做什麼/吃什麼餐廳/玩什麼？寫下來，讓大家附議！</p>
   <div class="wish-form">
     <input class="wish-in" id="wishText" placeholder="我想和大家一起..." maxlength="60" onkeydown="if(event.key==='Enter')addWish()">
     <button class="submit-btn" onclick="addWish()">送出 ✦</button>
@@ -1018,7 +1018,7 @@ function renderWishes(){
         <div class="wish-author">${w.date}</div>
         <div class="wish-text" style="padding-bottom:28px;">${w.text}</div>
         <div style="position:absolute;bottom:10px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:center;">
-          <button onclick="likeWish(${i})" style="background:${hasLiked?'rgba(255,100,100,0.2)':'rgba(255,255,255,0.5)'};border:none;border-radius:20px;padding:3px 9px;font-size:12px;cursor:${hasLiked?'default':'pointer'};display:flex;align-items:center;gap:3px;transition:all 0.2s;" ${hasLiked?'disabled':''}>
+          <button onclick="likeWish(${i})" style="background:${hasLiked?'rgba(255,100,100,0.2)':'rgba(255,255,255,0.5)'};border:none;border-radius:20px;padding:3px 9px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:3px;transition:all 0.2s;">
             ${hasLiked?'❤️':'🤍'} ${w.likes||0}
           </button>
           <button onclick="deleteWish(${i})" title="刪除這個心願" style="background:none;border:none;cursor:pointer;color:rgba(0,0,0,0.25);font-size:13px;padding:2px 4px;border-radius:4px;transition:all 0.2s;" onmouseover="this.style.color='var(--coral)'" onmouseout="this.style.color='rgba(0,0,0,0.25)'">🗑</button>
@@ -1045,12 +1045,21 @@ function likeWish(i){
   const wishes = getWishes();
   const liked = getLiked();
   const id = wishes[i].id||i;
-  if(liked.includes(id)) return;
-  wishes[i].likes=(wishes[i].likes||0)+1;
-  liked.push(id);
-  saveWishes(wishes);
-  saveLiked(liked);
-  trackEvent({ action:'wish_like', id });
+  if(liked.includes(id)){
+    // 收回讚
+    wishes[i].likes = Math.max(0, (wishes[i].likes||0)-1);
+    const newLiked = liked.filter(l=>l!==id);
+    saveWishes(wishes);
+    saveLiked(newLiked);
+    trackEvent({ action:'wish_unlike', id });
+  } else {
+    // 按讚
+    wishes[i].likes = (wishes[i].likes||0)+1;
+    liked.push(id);
+    saveWishes(wishes);
+    saveLiked(liked);
+    trackEvent({ action:'wish_like', id });
+  }
   renderWishes();
 }
 
