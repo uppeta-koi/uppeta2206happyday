@@ -495,7 +495,7 @@ footer {
   <div class="section-header">
     <h2>夥伴心願牆 🌸</h2>
   </div>
-  <p style="color:var(--text-muted);margin-bottom:20px;font-size:14px;">你想和大家一起做什麼/吃什麼/玩什麼？寫下來，讓大家附議！</p>
+  <p style="color:var(--text-muted);margin-bottom:20px;font-size:14px;">你想和大家一起做什麼/吃什麼/玩什麼？寫下來，讓大家附議（求多推薦餐廳～）！</p>
   <div class="wish-form">
     <input class="wish-in" id="wishText" placeholder="我想和大家一起..." maxlength="60" onkeydown="if(event.key==='Enter')addWish()">
     <button class="submit-btn" onclick="addWish()">送出 ✦</button>
@@ -1039,7 +1039,7 @@ function renderWishes(){
   const liked = getLiked();
   const el = document.getElementById('wishGrid');
   if(wishes.length===0){
-    el.innerHTML='<div style="color:var(--text-muted);font-size:14px;grid-column:1/-1;padding:20px 0;">還沒有心願，來第一個分享吧，拜託多分享餐廳XD🌱</div>';
+    el.innerHTML='<div style="color:var(--text-muted);font-size:14px;grid-column:1/-1;padding:20px 0;">還沒有心願，來第一個分享吧！🌱</div>';
     return;
   }
   el.innerHTML = wishes.map((w,i)=>{
@@ -1391,28 +1391,32 @@ renderActivityList();
 
 // Firebase 即時監聽（每 3 秒自動更新）
 fbListen('votes/may', data => {
-  if(!data) return;
+  if(!data || typeof data !== 'object') return;
   const local = getVotes('may');
   const merged = { _my: local._my };
-  Object.entries(data).forEach(([id,cnt])=>{ merged[id]=cnt; });
+  Object.entries(data).forEach(([id,cnt])=>{
+    if(typeof cnt === 'number') merged[id]=cnt;
+  });
   saveVotes('may', merged);
   renderMonthDetails();
 });
 
 fbListen('votes/dec', data => {
-  if(!data) return;
+  if(!data || typeof data !== 'object') return;
   const local = getVotes('dec');
   const merged = { _my: local._my };
-  Object.entries(data).forEach(([id,cnt])=>{ merged[id]=cnt; });
+  Object.entries(data).forEach(([id,cnt])=>{
+    if(typeof cnt === 'number') merged[id]=cnt;
+  });
   saveVotes('dec', merged);
   renderMonthDetails();
 });
 
 fbListen('wishes', data => {
-  if(!data) return;
+  if(!data || typeof data !== 'object') return;
   const wishes = Object.values(data)
-    .filter(w => w && w.text)
-    .sort((a,b) => b.id - a.id);
+    .filter(w => w && typeof w === 'object' && w.text)
+    .sort((a,b) => (b.id||0) - (a.id||0));
   saveWishes(wishes);
   renderWishes();
 });
