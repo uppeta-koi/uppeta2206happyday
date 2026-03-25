@@ -1163,14 +1163,16 @@ function renderSportStatus(){
   const data = getSportData();
   const groups = (data[wk]||[]);
   const el = document.getElementById('tab-status');
+  if(!el) return;
   const totalJoined = groups.reduce((s,g)=>s+g.registrants.length,0);
   updateFabBadge(totalJoined);
 
   if(groups.length===0){
     el.innerHTML=`
-      <div style="text-align:center;padding:16px 0 12px;color:var(--text-muted);font-size:13px;">
-        <div style="font-size:28px;margin-bottom:6px;">🏃</div>
-        本週還沒有揪團，你來第一個發起吧！
+      <div style="text-align:center;padding:16px 0 8px;">
+        <div style="font-size:32px;margin-bottom:8px;">🏃💨</div>
+        <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:4px;">大家要記得運動呀！</div>
+        <div style="font-size:12.5px;color:var(--text-muted);margin-bottom:14px;">本週還沒有揪團，快來發起第一個吧！</div>
       </div>
       <button class="join-btn" onclick="document.getElementById('initiateModal').classList.add('open')">＋ 發起揪團</button>`;
     return;
@@ -1278,23 +1280,33 @@ async function deleteGroup(idx){
 
 async function joinGroup(idx){
   const wk = getWeekKey();
-  const groups = await fbLoadSport(wk);
-  const g = groups[idx];
-  if(!g) return;
   const myKey = 'sport_joined_'+wk+'_'+idx;
   const joined = localStorage.getItem(myKey)==='1';
-  if(joined){
-    g.registrants = g.registrants.slice(0,-1);
-    localStorage.removeItem(myKey);
-  } else {
+
+  // 如果是要參加，先開 modal
+  if(!joined){
     document.getElementById('joinGroupIdx').value = idx;
     document.getElementById('joinModal').classList.add('open');
     return;
   }
-  await fbSaveSport(wk, groups);
-  const data = getSportData();
-  data[wk] = groups;
-  saveSportData(data);
+
+  // 取消報名流程
+  const btn = document.querySelector(`button[onclick="joinGroup(${idx})"]`);
+  if(btn){ btn.disabled=true; btn.textContent='處理中...'; }
+
+  try {
+    const groups = await fbLoadSport(wk);
+    const g = groups[idx];
+    if(!g) return;
+    g.registrants = g.registrants.slice(0,-1);
+    localStorage.removeItem(myKey);
+    await fbSaveSport(wk, groups);
+    const data = getSportData();
+    data[wk] = groups;
+    saveSportData(data);
+  } catch(e) {
+    alert('取消報名失敗，請再試一次');
+  }
   renderSportStatus();
 }
 
@@ -1308,19 +1320,32 @@ function closeJoinModal(){ document.getElementById('joinModal').classList.remove
 async function confirmJoin(){
   const name = document.getElementById('joinName').value.trim();
   const idx = parseInt(document.getElementById('joinGroupIdx').value)||0;
-  const wk = getWeekKey();
-  const groups = await fbLoadSport(wk);
-  if(!groups[idx]) return;
-  groups[idx].registrants.push(name||'');
-  localStorage.setItem('sport_joined_'+wk+'_'+idx,'1');
-  await fbSaveSport(wk, groups);
-  const data = getSportData();
-  data[wk] = groups;
-  saveSportData(data);
-  const g = groups[idx];
-  trackEvent({ action:'sport_join', weekKey:wk, item:g.item, isoDate:g.isoDate, time:g.time, place:g.place, organizer:g.organizer, name:name||'匿名夥伴', action_type:'join' });
+  const confirmBtn = document.querySelector('#joinModal .modal-confirm');
+  if(confirmBtn){ confirmBtn.disabled=true; confirmBtn.textContent='報名中...'; }
+
+  try {
+    const wk = getWeekKey();
+    const groups = await fbLoadSport(wk);
+    if(!groups[idx]){
+      alert('找不到這個揪團，請重新整理後再試');
+      closeJoinModal();
+      return;
+    }
+    groups[idx].registrants.push(name||'');
+    localStorage.setItem('sport_joined_'+wk+'_'+idx,'1');
+    await fbSaveSport(wk, groups);
+    const data = getSportData();
+    data[wk] = groups;
+    saveSportData(data);
+    const g = groups[idx];
+    trackEvent({ action:'sport_join', weekKey:wk, item:g.item, isoDate:g.isoDate, time:g.time, place:g.place, organizer:g.organizer, name:name||'匿名夥伴', action_type:'join' });
+  } catch(e) {
+    alert('報名失敗，請再試一次');
+  }
+
   closeJoinModal();
   document.getElementById('joinName').value='';
+  if(confirmBtn){ confirmBtn.disabled=false; confirmBtn.textContent='確認報名'; }
   renderSportStatus();
 }
 
