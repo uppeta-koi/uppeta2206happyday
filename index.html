@@ -495,7 +495,7 @@ footer {
   <div class="section-header">
     <h2>夥伴心願牆 🌸</h2>
   </div>
-  <p style="color:var(--text-muted);margin-bottom:20px;font-size:14px;">你想和大家一起做什麼/吃什麼/玩什麼？寫下來，讓大家附議（求多推薦餐廳～）！</p>
+  <p style="color:var(--text-muted);margin-bottom:20px;font-size:14px;">你想和大家一起做什麼？寫下來，讓大家附議！</p>
   <div class="wish-form">
     <input class="wish-in" id="wishText" placeholder="我想和大家一起..." maxlength="60" onkeydown="if(event.key==='Enter')addWish()">
     <button class="submit-btn" onclick="addWish()">送出 ✦</button>
@@ -902,7 +902,10 @@ const ctx = canvas.getContext('2d');
 let spinning = false, angle = 0, spinData = {};
 
 function getSpinData(){ return JSON.parse(localStorage.getItem('uppeta_spin')||'{"done":[],"history":[]}'); }
-function saveSpinData(d){ localStorage.setItem('uppeta_spin',JSON.stringify(d)); }
+function saveSpinData(d){
+  localStorage.setItem('uppeta_spin',JSON.stringify(d));
+  fbSet('spinner', d); // 同步到 Firebase
+}
 
 const SEGMENT_COLORS = ['#1F456E','#2a6099','#3476b5','#4A90D9','#1e7a6e','#2ECC8F','#27ae78','#1abc9c','#1F456E','#2a6099','#3476b5','#4A90D9'];
 
@@ -1128,8 +1131,11 @@ const SPORT_ACTIVITY_LIST = [
 ];
 
 function getWeekKey(){ const d=new Date(); const jan1=new Date(d.getFullYear(),0,1); return `${d.getFullYear()}-W${Math.ceil(((d-jan1)/86400000+jan1.getDay()+1)/7)}`; }
+// 揪團改用 Firebase，localStorage 只當快取
 function getSportData(){ return JSON.parse(localStorage.getItem('uppeta_sport2')||'{}'); }
 function saveSportData(d){ localStorage.setItem('uppeta_sport2',JSON.stringify(d)); }
+async function fbSaveSport(wk, groups){ await fbSet(`sport/${wk}`, groups.length ? groups : null); }
+async function fbLoadSport(wk){ const d = await fbGet(`sport/${wk}`); return d || []; }
 
 function toggleSportPanel(){
   document.getElementById('sportPanel').classList.toggle('open');
@@ -1257,20 +1263,22 @@ function renderSportStatus(){
     <button class="join-btn" style="background:var(--sky);margin-top:4px;" onclick="document.getElementById('initiateModal').classList.add('open')">＋ 再發起一個揪團</button>`;
 }
 
-function deleteGroup(idx){
+async function deleteGroup(idx){
   const wk = getWeekKey();
+  const groups = await fbLoadSport(wk);
+  if(!groups[idx]) return;
+  groups.splice(idx, 1);
+  await fbSaveSport(wk, groups);
   const data = getSportData();
-  if(!data[wk]) return;
-  data[wk].splice(idx, 1);
-  for(let j=0; j<20; j++) localStorage.removeItem('sport_joined_'+wk+'_'+j);
+  data[wk] = groups;
   saveSportData(data);
+  for(let j=0; j<20; j++) localStorage.removeItem('sport_joined_'+wk+'_'+j);
   renderSportStatus();
 }
 
-function joinGroup(idx){
+async function joinGroup(idx){
   const wk = getWeekKey();
-  const data = getSportData();
-  const groups = data[wk]||[];
+  const groups = await fbLoadSport(wk);
   const g = groups[idx];
   if(!g) return;
   const myKey = 'sport_joined_'+wk+'_'+idx;
@@ -1283,6 +1291,9 @@ function joinGroup(idx){
     document.getElementById('joinModal').classList.add('open');
     return;
   }
+  await fbSaveSport(wk, groups);
+  const data = getSportData();
+  data[wk] = groups;
   saveSportData(data);
   renderSportStatus();
 }
@@ -1294,17 +1305,18 @@ function updateFabBadge(n){
 
 function openJoinModal(){ document.getElementById('joinModal').classList.add('open'); }
 function closeJoinModal(){ document.getElementById('joinModal').classList.remove('open'); }
-function confirmJoin(){
+async function confirmJoin(){
   const name = document.getElementById('joinName').value.trim();
   const idx = parseInt(document.getElementById('joinGroupIdx').value)||0;
   const wk = getWeekKey();
-  const data = getSportData();
-  const groups = data[wk]||[];
+  const groups = await fbLoadSport(wk);
   if(!groups[idx]) return;
   groups[idx].registrants.push(name||'');
   localStorage.setItem('sport_joined_'+wk+'_'+idx,'1');
+  await fbSaveSport(wk, groups);
+  const data = getSportData();
+  data[wk] = groups;
   saveSportData(data);
-  // 追蹤報名
   const g = groups[idx];
   trackEvent({ action:'sport_join', weekKey:wk, item:g.item, isoDate:g.isoDate, time:g.time, place:g.place, organizer:g.organizer, name:name||'匿名夥伴', action_type:'join' });
   closeJoinModal();
@@ -1312,7 +1324,7 @@ function confirmJoin(){
   renderSportStatus();
 }
 
-function confirmInitiate(){
+async function confirmInitiate(){
   const item = document.getElementById('sportItem').value.trim();
   const time = document.getElementById('sportTime').value.trim();
   const place = document.getElementById('sportPlace').value.trim();
@@ -1327,11 +1339,12 @@ function confirmInitiate(){
     endHHMM=String((parseInt(h)+2)%24).padStart(2,'0')+m+'00';
   }
   const wk = getWeekKey();
+  const groups = await fbLoadSport(wk);
+  groups.push({item, time, place, isoDate:dateInput, startHHMM, endHHMM, organizer, registrants:[]});
+  await fbSaveSport(wk, groups);
   const data = getSportData();
-  if(!data[wk]) data[wk]=[];
-  data[wk].push({item, time, place, isoDate:dateInput, startHHMM, endHHMM, organizer, registrants:[]});
+  data[wk] = groups;
   saveSportData(data);
-  // 追蹤發起揪團
   trackEvent({ action:'sport_create', weekKey:wk, item, time, place, isoDate:dateInput, organizer });
   document.getElementById('initiateModal').classList.remove('open');
   ['sportItem','sportTime','sportPlace','sportDate','sportOrganizer'].forEach(id=>document.getElementById(id).value='');
@@ -1419,6 +1432,24 @@ fbListen('wishes', data => {
     .sort((a,b) => (b.id||0) - (a.id||0));
   saveWishes(wishes);
   renderWishes();
+});
+
+// 揪團即時同步
+fbListen(`sport/${getWeekKey()}`, data => {
+  if(!data || !Array.isArray(data)) return;
+  const wk = getWeekKey();
+  const local = getSportData();
+  local[wk] = data;
+  saveSportData(local);
+  renderSportStatus();
+});
+
+// 輪轉盤即時同步
+fbListen('spinner', data => {
+  if(!data || typeof data !== 'object') return;
+  if(!data.done || !data.history) return;
+  localStorage.setItem('uppeta_spin', JSON.stringify(data));
+  renderSpinnerUI();
 });
 </script>
 </body>
