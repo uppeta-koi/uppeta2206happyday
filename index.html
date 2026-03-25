@@ -495,7 +495,7 @@ footer {
   <div class="section-header">
     <h2>夥伴心願牆 🌸</h2>
   </div>
-  <p style="color:var(--text-muted);margin-bottom:20px;font-size:14px;">你想和大家一起做什麼/吃什麼餐廳/玩什麼？寫下來，讓大家附議！</p>
+  <p style="color:var(--text-muted);margin-bottom:20px;font-size:14px;">你想和大家一起做什麼？寫下來，讓大家附議！</p>
   <div class="wish-form">
     <input class="wish-in" id="wishText" placeholder="我想和大家一起..." maxlength="60" onkeydown="if(event.key==='Enter')addWish()">
     <button class="submit-btn" onclick="addWish()">送出 ✦</button>
@@ -565,42 +565,61 @@ footer {
 </footer>
 
 <script>
-// ─── APPS SCRIPT 串接 ───────────────────────────────
+// ─── APPS SCRIPT（備份紀錄用）────────────────────────
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyRZodJ2DOCuGcsbVYMFfGL2zcGplCIhtIhFiIe2eH90z2JyidSsQR54oxpDaB1OwVF/exec';
 
 function trackEvent(payload){
   fetch(APPS_SCRIPT_URL, {
-    method:'POST',
-    mode:'no-cors',
+    method:'POST', mode:'no-cors',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify(payload)
   }).catch(()=>{});
 }
 
-// ─── 從 Sheet 讀取資料（同步）────────────────────────
-async function fetchFromSheet(params){
+// ─── FIREBASE 設定 ───────────────────────────────────
+const FB_URL = 'https://uppeta2026happyday-default-rtdb.asia-southeast1.firebasedatabase.app';
+const FB_KEY = 'AIzaSyCoCxD5lTYVSrmUpNOCo4hICMqSEPrhTA8';
+
+// Firebase REST API helpers
+async function fbGet(path){
   try {
-    const url = APPS_SCRIPT_URL + '?' + new URLSearchParams(params);
-    const res = await fetch(url);
-    const data = await res.json();
-    return data;
+    const res = await fetch(`${FB_URL}/${path}.json?auth=${FB_KEY}`);
+    return await res.json();
   } catch(e){ return null; }
 }
-
-async function syncVotesFromSheet(key){
-  const data = await fetchFromSheet({ action:'get_votes', month:key });
-  if(!data || !data.ok) return;
-  // 把 Sheet 的票數寫入 localStorage（覆蓋），保留 _my 和 _pending
-  const local = getVotes(key);
-  const merged = { _my: local._my, _pending: local._pending };
-  Object.entries(data.votes).forEach(([id, cnt])=>{ merged[id] = cnt; });
-  saveVotes(key, merged);
+async function fbSet(path, data){
+  try {
+    await fetch(`${FB_URL}/${path}.json?auth=${FB_KEY}`, {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    });
+  } catch(e){}
+}
+async function fbPush(path, data){
+  try {
+    const res = await fetch(`${FB_URL}/${path}.json?auth=${FB_KEY}`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    });
+    return await res.json();
+  } catch(e){ return null; }
+}
+async function fbDelete(path){
+  try {
+    await fetch(`${FB_URL}/${path}.json?auth=${FB_KEY}`, { method:'DELETE' });
+  } catch(e){}
 }
 
-async function syncWishesFromSheet(){
-  const data = await fetchFromSheet({ action:'get_wishes' });
-  if(!data || !data.ok || !data.wishes) return;
-  saveWishes(data.wishes);
+// 監聽 Firebase 資料變化（每 3 秒輪詢）
+function fbListen(path, callback){
+  let lastVal = null;
+  const poll = async () => {
+    const data = await fbGet(path);
+    const str = JSON.stringify(data);
+    if(str !== lastVal){ lastVal = str; callback(data); }
+  };
+  poll();
+  return setInterval(poll, 3000);
 }
 
 // ─── DATA ───────────────────────────────────────────────
@@ -803,32 +822,44 @@ function toggleVoteSelect(key, id){
   renderMonthDetails();
 }
 
-function submitVotes(key){
+async function submitVotes(key){
   const sel = getMySelections(key);
   if(sel.length===0){ alert('請先勾選至少一個選項！'); return; }
-  const votes = getVotes(key);
+
+  // 從 Firebase 讀最新票數，加上自己的票，再寫回去
+  const fbVotes = await fbGet(`votes/${key}`) || {};
   const allOpts = key==='may' ? [...VOTE_OPTIONS,...getCustomOpts(key)] : [...DEC_VOTE_OPTIONS,...getCustomOpts(key)];
   sel.forEach(id=>{
-    votes[id] = (votes[id]||0)+1;
+    fbVotes[id] = (fbVotes[id]||0)+1;
     const opt = allOpts.find(o=>o.id===id);
     trackEvent({ action:'vote', month:key, optionId:id, optionName:opt?opt.name:id, action_type:'vote' });
   });
-  saveVotes(key, votes);
+  await fbSet(`votes/${key}`, fbVotes);
+
+  // 更新本地
+  const local = getVotes(key);
+  sel.forEach(id=>{ local[id]=(local[id]||0)+1; });
+  saveVotes(key, local);
   setSubmitted(key, true);
   renderMonthDetails();
 }
 
-function revote(key){
+async function revote(key){
   const sel = getMySelections(key);
-  const votes = getVotes(key);
+  const fbVotes = await fbGet(`votes/${key}`) || {};
   const allOpts = key==='may' ? [...VOTE_OPTIONS,...getCustomOpts(key)] : [...DEC_VOTE_OPTIONS,...getCustomOpts(key)];
   sel.forEach(id=>{
-    if(votes[id]>0) votes[id]--;
-    if(votes[id]<=0) delete votes[id];
+    if(fbVotes[id]>0) fbVotes[id]--;
+    if(fbVotes[id]<=0) delete fbVotes[id];
     const opt = allOpts.find(o=>o.id===id);
     trackEvent({ action:'vote', month:key, optionId:id, optionName:opt?opt.name:id, action_type:'unvote' });
   });
-  saveVotes(key, votes);
+  await fbSet(`votes/${key}`, fbVotes);
+
+  // 更新本地
+  const local = getVotes(key);
+  sel.forEach(id=>{ if(local[id]>0) local[id]--; if(local[id]<=0) delete local[id]; });
+  saveVotes(key, local);
   saveMySelections(key, []);
   setSubmitted(key, false);
   renderMonthDetails();
@@ -1027,21 +1058,25 @@ function renderWishes(){
   }).join('');
 }
 
-function addWish(){
+async function addWish(){
   const text = document.getElementById('wishText').value.trim();
   if(!text) return;
-  const wishes = getWishes();
   const now = new Date();
   const date = `${now.getMonth()+1}/${now.getDate()}`;
   const id = Date.now();
-  wishes.unshift({id, date, text, likes:0});
+  const wish = {id, date, text, likes:0};
+  // 寫入 Firebase
+  await fbSet(`wishes/${id}`, wish);
+  // 更新本地
+  const wishes = getWishes();
+  wishes.unshift(wish);
   saveWishes(wishes);
   document.getElementById('wishText').value='';
   trackEvent({ action:'wish_add', id, date, text });
   renderWishes();
 }
 
-function likeWish(i){
+async function likeWish(i){
   const wishes = getWishes();
   const liked = getLiked();
   const id = wishes[i].id||i;
@@ -1049,6 +1084,7 @@ function likeWish(i){
     // 收回讚
     wishes[i].likes = Math.max(0, (wishes[i].likes||0)-1);
     const newLiked = liked.filter(l=>l!==id);
+    await fbSet(`wishes/${id}/likes`, wishes[i].likes);
     saveWishes(wishes);
     saveLiked(newLiked);
     trackEvent({ action:'wish_unlike', id });
@@ -1056,6 +1092,7 @@ function likeWish(i){
     // 按讚
     wishes[i].likes = (wishes[i].likes||0)+1;
     liked.push(id);
+    await fbSet(`wishes/${id}/likes`, wishes[i].likes);
     saveWishes(wishes);
     saveLiked(liked);
     trackEvent({ action:'wish_like', id });
@@ -1063,10 +1100,11 @@ function likeWish(i){
   renderWishes();
 }
 
-function deleteWish(i){
+async function deleteWish(i){
   const wishes = getWishes();
   const liked = getLiked();
   const id = wishes[i].id||i;
+  await fbDelete(`wishes/${id}`);
   const newLiked = liked.filter(l=>l!==id);
   trackEvent({ action:'wish_delete', id });
   wishes.splice(i,1);
@@ -1343,7 +1381,7 @@ if(localStorage.getItem('uppeta_vote_ver') !== VOTE_VERSION){
   localStorage.setItem('uppeta_vote_ver', VOTE_VERSION);
 }
 
-// 先用本地資料快速顯示，再從 Sheet 同步更新
+// 先用本地資料快速顯示
 renderMonthCards();
 renderMonthDetails();
 renderSpinnerUI();
@@ -1351,17 +1389,33 @@ renderWishes();
 renderSportStatus();
 renderActivityList();
 
-// 非同步從 Sheet 讀取最新資料，讀完後更新畫面
-(async () => {
-  // 同步投票票數
-  await syncVotesFromSheet('may');
-  await syncVotesFromSheet('dec');
-  renderMonthDetails(); // 重新渲染顯示最新票數
+// Firebase 即時監聽（每 3 秒自動更新）
+fbListen('votes/may', data => {
+  if(!data) return;
+  const local = getVotes('may');
+  const merged = { _my: local._my };
+  Object.entries(data).forEach(([id,cnt])=>{ merged[id]=cnt; });
+  saveVotes('may', merged);
+  renderMonthDetails();
+});
 
-  // 同步心願牆
-  await syncWishesFromSheet();
-  renderWishes(); // 重新渲染顯示最新心願
-})();
+fbListen('votes/dec', data => {
+  if(!data) return;
+  const local = getVotes('dec');
+  const merged = { _my: local._my };
+  Object.entries(data).forEach(([id,cnt])=>{ merged[id]=cnt; });
+  saveVotes('dec', merged);
+  renderMonthDetails();
+});
+
+fbListen('wishes', data => {
+  if(!data) return;
+  const wishes = Object.values(data)
+    .filter(w => w && w.text)
+    .sort((a,b) => b.id - a.id);
+  saveWishes(wishes);
+  renderWishes();
+});
 </script>
 </body>
 </html>
