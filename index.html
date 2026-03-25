@@ -1138,8 +1138,28 @@ async function fbSaveSport(wk, groups){ await fbSet(`sport/${wk}`, groups.length
 async function fbLoadSport(wk){ const d = await fbGet(`sport/${wk}`); return d || []; }
 
 function toggleSportPanel(){
-  document.getElementById('sportPanel').classList.toggle('open');
-  if(document.getElementById('sportPanel').classList.contains('open')){ renderSportStatus(); renderActivityList(); }
+  const panel = document.getElementById('sportPanel');
+  panel.classList.toggle('open');
+  if(panel.classList.contains('open')){
+    // 先顯示 loading 狀態
+    document.getElementById('tab-status').innerHTML = `
+      <div style="text-align:center;padding:20px 0;color:var(--text-muted);font-size:13px;">
+        <div style="font-size:24px;margin-bottom:6px;">🏃💨</div>
+        <div style="font-weight:600;color:var(--navy);margin-bottom:4px;">大家要記得運動呀！</div>
+        <div>載入中...</div>
+      </div>`;
+    // 從 Firebase 讀最新揪團資料再渲染
+    const wk = getWeekKey();
+    fbGet(`sport/${wk}`).then(fbData => {
+      if(fbData && Array.isArray(fbData) && fbData.length > 0){
+        const local = getSportData();
+        local[wk] = fbData;
+        saveSportData(local);
+      }
+      renderSportStatus();
+    });
+    renderActivityList();
+  }
 }
 function switchTab(tab,btn){
   document.querySelectorAll('.panel-tab').forEach(b=>b.classList.remove('active'));
@@ -1461,12 +1481,21 @@ fbListen('wishes', data => {
 
 // 揪團即時同步
 fbListen(`sport/${getWeekKey()}`, data => {
-  if(!data || !Array.isArray(data)) return;
   const wk = getWeekKey();
   const local = getSportData();
-  local[wk] = data;
+  if(data && Array.isArray(data)){
+    local[wk] = data;
+  } else if(!data){
+    local[wk] = [];
+  }
   saveSportData(local);
-  renderSportStatus();
+  // 只有面板開著才重新渲染
+  if(document.getElementById('sportPanel').classList.contains('open')){
+    renderSportStatus();
+  }
+  // 更新徽章數字
+  const groups = local[wk]||[];
+  updateFabBadge(groups.reduce((s,g)=>s+g.registrants.length,0));
 });
 
 // 輪轉盤即時同步
