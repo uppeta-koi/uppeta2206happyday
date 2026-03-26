@@ -532,7 +532,7 @@ footer {
   <div class="modal-box">
     <h4>我要參加！🙌</h4>
     <p>輸入你的名字，或匿名參加也 OK～</p>
-    <input type="hidden" id="joinGroupIdx" value="0">
+    <input type="hidden" id="joinGroupId" value="">
     <input id="joinName" placeholder="你的名字（選填）" maxlength="20">
     <div class="modal-btns">
       <button class="modal-cancel" onclick="closeJoinModal()">取消</button>
@@ -1131,34 +1131,47 @@ const SPORT_ACTIVITY_LIST = [
 ];
 
 function getWeekKey(){ const d=new Date(); const jan1=new Date(d.getFullYear(),0,1); return `${d.getFullYear()}-W${Math.ceil(((d-jan1)/86400000+jan1.getDay()+1)/7)}`; }
-// 揪團改用 Firebase，localStorage 只當快取
-function getSportData(){ return JSON.parse(localStorage.getItem('uppeta_sport2')||'{}'); }
-function saveSportData(d){ localStorage.setItem('uppeta_sport2',JSON.stringify(d)); }
-async function fbSaveSport(wk, groups){ await fbSet(`sport/${wk}`, groups.length ? groups : null); }
-async function fbLoadSport(wk){ const d = await fbGet(`sport/${wk}`); return d || []; }
+
+// 揪團完全用 Firebase，localStorage 完全不用
+let _sportCache = {}; // 記憶體快取，不碰 localStorage
+function getSportGroups(wk){ return _sportCache[wk] || []; }
+function normalizeSportGroups(data){
+  if(!data || typeof data !== 'object') return [];
+  // RTDB best practice: sport/{wk}/{groupId} = { ... }
+  const groups = Object.entries(data)
+    .map(([id, g]) => (g && typeof g === 'object') ? ({ id, ...g }) : null)
+    .filter(Boolean);
+  // sort by date then time (best-effort)
+  groups.sort((a,b)=>{
+    const da = (a.isoDate||'9999-99-99');
+    const db = (b.isoDate||'9999-99-99');
+    if(da !== db) return da.localeCompare(db);
+    const ta = (a.startHHMM||'999999');
+    const tb = (b.startHHMM||'999999');
+    return ta.localeCompare(tb);
+  });
+  return groups;
+}
+// 不再用舊的 getSportData / saveSportData，保留空函式避免錯誤
+function getSportData(){ return _sportCache; }
+function saveSportData(){} // no-op
 
 function toggleSportPanel(){
   const panel = document.getElementById('sportPanel');
   panel.classList.toggle('open');
   if(panel.classList.contains('open')){
-    // 確保 tab-status 可見、tab-vote 隱藏
     document.getElementById('tab-status').style.display = 'block';
     document.getElementById('tab-vote').style.display = 'none';
-    // 重設 tab 按鈕狀態
     document.querySelectorAll('.panel-tab').forEach((b,i)=>{
       b.classList.toggle('active', i===0);
     });
+    // 先用快取立刻顯示，再從 Firebase 更新
     renderSportStatus();
     renderActivityList();
-    // 背景從 Firebase 拉最新資料
     const wk = getWeekKey();
     fbGet(`sport/${wk}`).then(fbData => {
-      if(fbData && Array.isArray(fbData)){
-        const local = getSportData();
-        local[wk] = fbData;
-        saveSportData(local);
-        renderSportStatus();
-      }
+      _sportCache[wk] = normalizeSportGroups(fbData);
+      renderSportStatus();
     }).catch(()=>{});
   }
 }
@@ -1181,12 +1194,10 @@ function buildGCalUrl(g){
 
 function renderSportStatus(){
   const wk = getWeekKey();
-  const data = getSportData();
-  const groups = (data[wk]||[]);
+  const groups = getSportGroups(wk);
   const el = document.getElementById('tab-status');
   if(!el) return;
-  const totalJoined = groups.reduce((s,g)=>s+g.registrants.length,0);
-  updateFabBadge(totalJoined);
+  updateFabBadge(groups.reduce((s,g)=>s+Object.values(g.registrants||{}).filter(Boolean).length,0));
 
   if(groups.length===0){
     el.innerHTML=`
@@ -1230,12 +1241,13 @@ function renderSportStatus(){
 
     const cards = byDate[dateKey].map(g=>{
       const i = g._idx;
-      const count = g.registrants.length;
+      const registrantsArr = Object.values(g.registrants||{}).filter(v => typeof v === 'string');
+      const count = registrantsArr.length;
       const pct = Math.min(count/5*100,100);
       const full = count>=5;
       const gcalUrl = buildGCalUrl(g);
-      const myKey = 'sport_joined_'+wk+'_'+i;
-      const joined = localStorage.getItem(myKey)==='1';
+      const myKey = 'sport_joined_'+wk+'_'+g.id; // store registrantKey when joined
+      const joined = !!localStorage.getItem(myKey);
       return `
         <div style="background:white;border-radius:10px;padding:11px 13px;margin-bottom:8px;border:1.5px solid ${full?'var(--mint)':'var(--border)'};">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px;">
@@ -1245,13 +1257,13 @@ function renderSportStatus(){
             </div>
             <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
               ${full?'<span style="background:var(--mint-light);color:#1a7a50;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;">✓ 成團</span>':'<span style="background:var(--sky-light);color:var(--sky);font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;">招募中</span>'}
-              <button onclick="deleteGroup(${i})" title="刪除這個揪團" style="background:none;border:none;cursor:pointer;color:rgba(0,0,0,0.2);font-size:13px;padding:2px 4px;border-radius:4px;line-height:1;transition:color 0.2s;" onmouseover="this.style.color='var(--coral)'" onmouseout="this.style.color='rgba(0,0,0,0.2)'">🗑</button>
+              <button onclick="deleteGroup('${g.id}')" title="刪除這個揪團" style="background:none;border:none;cursor:pointer;color:rgba(0,0,0,0.2);font-size:13px;padding:2px 4px;border-radius:4px;line-height:1;transition:color 0.2s;" onmouseover="this.style.color='var(--coral)'" onmouseout="this.style.color='rgba(0,0,0,0.2)'">🗑</button>
             </div>
           </div>
           ${g.place||g.organizer?`<div style="font-size:11.5px;color:var(--text-muted);margin-bottom:7px;">${g.place?'📍'+g.place+'　':''}${g.organizer?'👤'+g.organizer:''}</div>`:''}
           <div style="margin-bottom:6px;">
             <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:3px;">
-              <span style="display:flex;flex-wrap:wrap;gap:3px;">${g.registrants.map(r=>`<span style="background:var(--bg);border-radius:20px;padding:1px 7px;">${r||'匿名'}</span>`).join('')}${g.registrants.length===0?'<span style="opacity:0.5">還沒有人報名</span>':''}</span>
+              <span style="display:flex;flex-wrap:wrap;gap:3px;">${registrantsArr.map(r=>`<span style="background:var(--bg);border-radius:20px;padding:1px 7px;">${r||'匿名'}</span>`).join('')}${registrantsArr.length===0?'<span style="opacity:0.5">還沒有人報名</span>':''}</span>
               <span style="flex-shrink:0;margin-left:6px;font-weight:500;color:${full?'#1a7a50':'var(--sky)'};">${count}/5</span>
             </div>
             <div style="background:var(--border);border-radius:6px;height:5px;">
@@ -1260,7 +1272,7 @@ function renderSportStatus(){
             ${!full?`<div style="font-size:10.5px;color:var(--text-muted);margin-top:3px;">還差 ${Math.max(0,5-count)} 人成團解鎖 Calendar 🔒</div>`:''}
           </div>
           <div style="display:flex;gap:6px;">
-            <button onclick="joinGroup(${i})" style="flex:1;padding:7px;border-radius:8px;border:none;font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;transition:all 0.2s;background:${joined?'var(--coral-light)':'var(--navy)'};color:${joined?'var(--coral)':'white'};">
+            <button onclick="joinGroup('${g.id}')" style="flex:1;padding:7px;border-radius:8px;border:none;font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;transition:all 0.2s;background:${joined?'var(--coral-light)':'var(--navy)'};color:${joined?'var(--coral)':'white'};">
               ${joined?'✕ 取消報名':'🙋 我要參加'}
             </button>
             ${full?`<a href="${gcalUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:7px;border-radius:8px;background:var(--sky-light);border:1.5px solid #c2ddf5;color:var(--navy);font-size:12.5px;font-weight:500;text-decoration:none;">
@@ -1286,48 +1298,31 @@ function renderSportStatus(){
     <button class="join-btn" style="background:var(--sky);margin-top:4px;" onclick="document.getElementById('initiateModal').classList.add('open')">＋ 再發起一個揪團</button>`;
 }
 
-async function deleteGroup(idx){
+async function deleteGroup(groupId){
   const wk = getWeekKey();
-  const groups = await fbLoadSport(wk);
-  if(!groups[idx]) return;
-  groups.splice(idx, 1);
-  await fbSaveSport(wk, groups);
-  const data = getSportData();
-  data[wk] = groups;
-  saveSportData(data);
-  for(let j=0; j<20; j++) localStorage.removeItem('sport_joined_'+wk+'_'+j);
+  // remove local join marker for this group if any
+  localStorage.removeItem('sport_joined_'+wk+'_'+groupId);
+  await fbDelete(`sport/${wk}/${groupId}`);
   renderSportStatus();
 }
 
-async function joinGroup(idx){
+async function joinGroup(groupId){
   const wk = getWeekKey();
-  const myKey = 'sport_joined_'+wk+'_'+idx;
-  const joined = localStorage.getItem(myKey)==='1';
-
-  // 如果是要參加，先開 modal
+  const myKey = 'sport_joined_'+wk+'_'+groupId; // stores registrantKey
+  const joinedRegistrantKey = localStorage.getItem(myKey);
+  const joined = !!joinedRegistrantKey;
   if(!joined){
-    document.getElementById('joinGroupIdx').value = idx;
+    document.getElementById('joinGroupId').value = groupId;
     document.getElementById('joinModal').classList.add('open');
     return;
   }
-
-  // 取消報名流程
-  const btn = document.querySelector(`button[onclick="joinGroup(${idx})"]`);
+  const btn = document.querySelector(`button[onclick="joinGroup('${groupId}')"]`);
   if(btn){ btn.disabled=true; btn.textContent='處理中...'; }
-
   try {
-    const groups = await fbLoadSport(wk);
-    const g = groups[idx];
-    if(!g) return;
-    g.registrants = g.registrants.slice(0,-1);
+    // cancel join: delete my registrant entry
+    await fbDelete(`sport/${wk}/${groupId}/registrants/${joinedRegistrantKey}`);
     localStorage.removeItem(myKey);
-    await fbSaveSport(wk, groups);
-    const data = getSportData();
-    data[wk] = groups;
-    saveSportData(data);
-  } catch(e) {
-    alert('取消報名失敗，請再試一次');
-  }
+  } catch(e){ alert('取消報名失敗，請再試一次'); }
   renderSportStatus();
 }
 
@@ -1340,30 +1335,18 @@ function openJoinModal(){ document.getElementById('joinModal').classList.add('op
 function closeJoinModal(){ document.getElementById('joinModal').classList.remove('open'); }
 async function confirmJoin(){
   const name = document.getElementById('joinName').value.trim();
-  const idx = parseInt(document.getElementById('joinGroupIdx').value)||0;
+  const groupId = document.getElementById('joinGroupId').value;
   const confirmBtn = document.querySelector('#joinModal .modal-confirm');
   if(confirmBtn){ confirmBtn.disabled=true; confirmBtn.textContent='報名中...'; }
-
   try {
     const wk = getWeekKey();
-    const groups = await fbLoadSport(wk);
-    if(!groups[idx]){
-      alert('找不到這個揪團，請重新整理後再試');
-      closeJoinModal();
-      return;
-    }
-    groups[idx].registrants.push(name||'');
-    localStorage.setItem('sport_joined_'+wk+'_'+idx,'1');
-    await fbSaveSport(wk, groups);
-    const data = getSportData();
-    data[wk] = groups;
-    saveSportData(data);
-    const g = groups[idx];
+    if(!groupId){ alert('找不到這個揪團，請重新整理'); closeJoinModal(); return; }
+    const registrantRes = await fbPush(`sport/${wk}/${groupId}/registrants`, name||'');
+    if(!registrantRes || !registrantRes.name){ throw new Error('push registrant failed'); }
+    localStorage.setItem('sport_joined_'+wk+'_'+groupId, registrantRes.name);
+    const g = (getSportGroups(wk).find(x=>x.id===groupId)) || {};
     trackEvent({ action:'sport_join', weekKey:wk, item:g.item, isoDate:g.isoDate, time:g.time, place:g.place, organizer:g.organizer, name:name||'匿名夥伴', action_type:'join' });
-  } catch(e) {
-    alert('報名失敗，請再試一次');
-  }
-
+  } catch(e){ alert('報名失敗，請再試一次'); }
   closeJoinModal();
   document.getElementById('joinName').value='';
   if(confirmBtn){ confirmBtn.disabled=false; confirmBtn.textContent='確認報名'; }
@@ -1385,12 +1368,7 @@ async function confirmInitiate(){
     endHHMM=String((parseInt(h)+2)%24).padStart(2,'0')+m+'00';
   }
   const wk = getWeekKey();
-  const groups = await fbLoadSport(wk);
-  groups.push({item, time, place, isoDate:dateInput, startHHMM, endHHMM, organizer, registrants:[]});
-  await fbSaveSport(wk, groups);
-  const data = getSportData();
-  data[wk] = groups;
-  saveSportData(data);
+  await fbPush(`sport/${wk}`, {item, time, place, isoDate:dateInput, startHHMM, endHHMM, organizer, registrants:null});
   trackEvent({ action:'sport_create', weekKey:wk, item, time, place, isoDate:dateInput, organizer });
   document.getElementById('initiateModal').classList.remove('open');
   ['sportItem','sportTime','sportPlace','sportDate','sportOrganizer'].forEach(id=>document.getElementById(id).value='');
@@ -1480,23 +1458,17 @@ fbListen('wishes', data => {
   renderWishes();
 });
 
+// 清除舊的揪團 localStorage 避免干擾
+localStorage.removeItem('uppeta_sport2');
+
 // 揪團即時同步
 fbListen(`sport/${getWeekKey()}`, data => {
   const wk = getWeekKey();
-  const local = getSportData();
-  if(data && Array.isArray(data)){
-    local[wk] = data;
-  } else if(!data){
-    local[wk] = [];
-  }
-  saveSportData(local);
-  // 只有面板開著才重新渲染
+  _sportCache[wk] = normalizeSportGroups(data);
+  updateFabBadge(_sportCache[wk].reduce((s,g)=>s+Object.values(g.registrants||{}).filter(Boolean).length,0));
   if(document.getElementById('sportPanel').classList.contains('open')){
     renderSportStatus();
   }
-  // 更新徽章數字
-  const groups = local[wk]||[];
-  updateFabBadge(groups.reduce((s,g)=>s+g.registrants.length,0));
 });
 
 // 輪轉盤即時同步
