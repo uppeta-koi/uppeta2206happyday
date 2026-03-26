@@ -1141,24 +1141,25 @@ function toggleSportPanel(){
   const panel = document.getElementById('sportPanel');
   panel.classList.toggle('open');
   if(panel.classList.contains('open')){
-    // 先顯示 loading 狀態
-    document.getElementById('tab-status').innerHTML = `
-      <div style="text-align:center;padding:20px 0;color:var(--text-muted);font-size:13px;">
-        <div style="font-size:24px;margin-bottom:6px;">🏃💨</div>
-        <div style="font-weight:600;color:var(--navy);margin-bottom:4px;">大家要記得運動呀！</div>
-        <div>載入中...</div>
-      </div>`;
-    // 從 Firebase 讀最新揪團資料再渲染
+    // 確保 tab-status 可見、tab-vote 隱藏
+    document.getElementById('tab-status').style.display = 'block';
+    document.getElementById('tab-vote').style.display = 'none';
+    // 重設 tab 按鈕狀態
+    document.querySelectorAll('.panel-tab').forEach((b,i)=>{
+      b.classList.toggle('active', i===0);
+    });
+    renderSportStatus();
+    renderActivityList();
+    // 背景從 Firebase 拉最新資料
     const wk = getWeekKey();
     fbGet(`sport/${wk}`).then(fbData => {
-      if(fbData && Array.isArray(fbData) && fbData.length > 0){
+      if(fbData && Array.isArray(fbData)){
         const local = getSportData();
         local[wk] = fbData;
         saveSportData(local);
+        renderSportStatus();
       }
-      renderSportStatus();
-    });
-    renderActivityList();
+    }).catch(()=>{});
   }
 }
 function switchTab(tab,btn){
