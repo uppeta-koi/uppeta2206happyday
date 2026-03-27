@@ -509,10 +509,7 @@ footer {
 <div id="sport-fab">
   <div class="sport-panel" id="sportPanel">
     <div class="panel-header">
-      <div>
-        <h4>💪 本週運動揪團</h4>
-        <div style="font-size:10.5px;color:rgba(255,255,255,0.55);margin-top:2px;">每月補助一次・5人成團即可申請</div>
-      </div>
+      <h4>💪 本週運動揪團</h4>
       <button class="panel-close" onclick="toggleSportPanel()">✕</button>
     </div>
     <div class="panel-body">
@@ -534,9 +531,9 @@ footer {
 <div class="modal-overlay" id="joinModal">
   <div class="modal-box">
     <h4>我要參加！🙌</h4>
-    <p>請填入你的名字才能完成報名 😊</p>
-    <input type="hidden" id="joinGroupIdx" value="0">
-    <input id="joinName" placeholder="你的名字（必填）" maxlength="20">
+    <p>請輸入你的真實姓名，才能完成報名。</p>
+    <input type="hidden" id="joinGroupId" value="">
+    <input id="joinName" placeholder="你的姓名（必填）" maxlength="20">
     <div class="modal-btns">
       <button class="modal-cancel" onclick="closeJoinModal()">取消</button>
       <button class="modal-confirm" onclick="confirmJoin()">確認報名</button>
@@ -629,13 +626,13 @@ function fbListen(path, callback){
 const MONTHS = [
   { id:'apr', name:'4月', en:'APR', activities:[
     {date:'4/22',title:'世界地球日聚餐',desc:'大家一起去咖啡廳辦公 or 早午餐，讓辦公室節能減碳',type:'dinner'},
-  ], holiday:'🗓 4/3–4/6 兒童節、清明節連假'},
+  ], holiday:'清明連假：4/3-4/6（共 4 天）'},
   { id:'may', name:'5月', en:'MAY', vote:true, activities:[
     {date:'5月',title:'Team Building（投票決定）',desc:'📅 目前日期暫定，確切時程確認後會提前讓大家準備一顆出遊之心～',type:'tb'},
-  ], holiday:'🗓 5/1–5/3 勞動節連假'},
+  ], holiday:'勞動節連假：5/1-5/3（共 3 天）'},
   { id:'jun', name:'6月', en:'JUN', activities:[
     {date:'6/24–6/26',title:'AI TAIWAN 未來商務展 ＋ 端午節聚餐',desc:'展覽吸收 AI 行銷新知，同時搭配端午節一起聚餐慶祝！',type:'learn'},
-  ], holiday:'🗓 6/19–6/21 端午節連假'},
+  ], holiday:'端午連假：6/19-6/21（共 3 天）'},
   { id:'jul', name:'7月', en:'JUL', activities:[
     {date:'7/27–7/29',title:'巧克力節特別小活動 🍫',desc:'巧克力噴泉派對，把甜蜜與驚喜帶給每一位夥伴！',type:'dinner'},
   ], holiday:''},
@@ -645,11 +642,11 @@ const MONTHS = [
   { id:'sep', name:'9月', en:'SEP', activities:[
     {date:'9/9–9/11',title:'Glamping ＋ 中秋烤肉',desc:'爬小山運動＋露營＋中秋烤肉三合一',type:'dinner'},
     {date:'9/17–9/19',title:'台灣創新技術博覽會',desc:'探索最新科技，一起長知識',type:'learn'},
-  ], holiday:'🗓 9/25–9/28 中秋節、教師節連假'},
+  ], holiday:'教師節 + 中秋連假：9/25-9/28（共 4 天）'},
   { id:'oct', name:'10月', en:'OCT', activities:[
     {date:'10/7',title:'台灣設計展桃園一日遊',desc:'欣賞設計，感受創意氛圍',type:'learn'},
     {date:'10/30',title:'萬聖節變裝披薩派對',desc:'變裝出動！一起吃披薩過萬聖節',type:'dinner'},
-  ], holiday:'🗓 10/9–10/11 國慶節連假　🗓 10/24–10/26 台灣光復節'},
+  ], holiday:'國慶連假：10/9-10/11（共 3 天）；光復節連假：10/24-10/26（共 3 天）'},
   { id:'nov', name:'11月', en:'NOV', special:true, activities:[
     {date:'11/24–11/25',title:'UPPETA 9 週年慶 🎉',desc:'九週年里程碑！具體活動規劃中，敬請期待',type:'dinner'},
     {date:'11月',title:'Meet Taipei 創新創業嘉年華',desc:'AI 新創展示，一起去看看有趣的小工具',type:'learn'},
@@ -657,7 +654,7 @@ const MONTHS = [
   { id:'dec', name:'12月', en:'DEC', activities:[
     {date:'12月',title:'Team Building 目的地 🗺',desc:'敬請期待！目的地投票即將開放，請大家預備一顆出遊之心～',type:'tb'},
     {date:'12/23',title:'聖誕聚餐＋棉花糖讚美挑戰',desc:'交換禮物＋棉花糖匿名讚美挑戰，溫暖收尾',type:'dinner'},
-  ], holiday:'🗓 12/25–12/27 行憲紀念日、聖誕節'},
+  ], holiday:'行憲紀念日連假：12/25-12/27（共 3 天）'},
 ];
 
 const VOTE_OPTIONS = [
@@ -724,7 +721,7 @@ function renderMonthDetails(){
         <h3>${m.name}</h3>
         ${m.special?'<span class="badge badge-anni" style="font-size:12px">★ UPPETA 9週年</span>':''}
       </div>
-      ${m.holiday?`<div style="background:var(--gold-light);border-left:3px solid var(--gold);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:8px 14px;margin-bottom:14px;font-size:13px;color:#8a6800;">${m.holiday}</div>`:''}
+      ${m.holiday?`<div class="busy-bar">🎌 國定假日：${m.holiday}</div>`:''}
       <div class="activities-grid">
         ${m.activities.map(a=>`
           <div class="activity-card">
@@ -965,30 +962,20 @@ function spinWheel(){
     else{
       spinning=false;
       document.getElementById('spinBtn').disabled=false;
-      // determine winners — strictly from available (not done) pool only
-      const avail = MEMBERS.filter(m=>!d.done.includes(m));
-      if(avail.length < 2){
-        alert('可用人數不足，請先重置紀錄！');
-        return;
-      }
-      const N = MEMBERS.length;
-      const normAngle = ((-(angle-Math.PI/2))%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
-      const idx = Math.floor(normAngle/(2*Math.PI/N))%N;
-      // 轉盤指到的人若已出場，改選 avail 中最近的人
-      let winner1 = MEMBERS[idx];
-      if(d.done.includes(winner1)){
-        // 從 avail 中選第一個
-        winner1 = avail[0];
-      }
-      // 第二位：從 avail 中隨機選一個，不能跟 winner1 重複
-      const avail2 = avail.filter(m => m !== winner1);
-      const winner2 = avail2[Math.floor(Math.random()*avail2.length)];
+      // 強制只從尚未中獎名單抽 2 位，避免重複
+      const availNow = MEMBERS.filter(m=>!d.done.includes(m));
+      if(availNow.length<2){ alert('可抽名單不足 2 人，請先重置'); return; }
+      const firstPickIdx = Math.floor(Math.random()*availNow.length);
+      const winner1 = availNow[firstPickIdx];
+      const rest = availNow.filter(n => n!==winner1);
+      const winner2 = rest[Math.floor(Math.random()*rest.length)];
       const winners = [winner1, winner2];
       winners.forEach(w=>{ if(!d.done.includes(w)) d.done.push(w); });
       const monthNames = ['四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
       const month = monthNames[d.history.length]||`第${d.history.length+1}次`;
       d.history.push({month, names:winners});
       saveSpinData(d);
+      // 追蹤抽籤結果
       trackEvent({ action:'spinner', month, names:winners });
       document.getElementById('winnerDisplay').innerHTML=`
         <div class="winner-names">
@@ -1141,18 +1128,31 @@ const SPORT_ACTIVITY_LIST = [
 ];
 
 function getWeekKey(){ const d=new Date(); const jan1=new Date(d.getFullYear(),0,1); return `${d.getFullYear()}-W${Math.ceil(((d-jan1)/86400000+jan1.getDay()+1)/7)}`; }
+function getMonthKey(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+function hasClaimedSubsidyThisMonth(){ return localStorage.getItem('sport_subsidy_claimed_month') === getMonthKey(); }
+function setClaimedSubsidyThisMonth(){ localStorage.setItem('sport_subsidy_claimed_month', getMonthKey()); }
+function clearClaimedSubsidyIfCurrentMonth(){
+  if(hasClaimedSubsidyThisMonth()) localStorage.removeItem('sport_subsidy_claimed_month');
+}
 
 // 揪團完全用 Firebase，localStorage 完全不用
 let _sportCache = {}; // 記憶體快取，不碰 localStorage
 function getSportGroups(wk){ return _sportCache[wk] || []; }
-async function fbSaveSport(wk, groups){
-  _sportCache[wk] = groups; // 更新記憶體快取
-  await fbSet(`sport/${wk}`, groups.length ? groups : null);
-}
-async function fbLoadSport(wk){
-  const d = await fbGet(`sport/${wk}`);
-  const groups = (d && Array.isArray(d)) ? d : [];
-  _sportCache[wk] = groups;
+function normalizeSportGroups(data){
+  if(!data || typeof data !== 'object') return [];
+  // RTDB best practice: sport/{wk}/{groupId} = { ... }
+  const groups = Object.entries(data)
+    .map(([id, g]) => (g && typeof g === 'object') ? ({ id, ...g }) : null)
+    .filter(Boolean);
+  // sort by date then time (best-effort)
+  groups.sort((a,b)=>{
+    const da = (a.isoDate||'9999-99-99');
+    const db = (b.isoDate||'9999-99-99');
+    if(da !== db) return da.localeCompare(db);
+    const ta = (a.startHHMM||'999999');
+    const tb = (b.startHHMM||'999999');
+    return ta.localeCompare(tb);
+  });
   return groups;
 }
 // 不再用舊的 getSportData / saveSportData，保留空函式避免錯誤
@@ -1173,8 +1173,7 @@ function toggleSportPanel(){
     renderActivityList();
     const wk = getWeekKey();
     fbGet(`sport/${wk}`).then(fbData => {
-      const groups = (fbData && Array.isArray(fbData)) ? fbData : [];
-      _sportCache[wk] = groups;
+      _sportCache[wk] = normalizeSportGroups(fbData);
       renderSportStatus();
     }).catch(()=>{});
   }
@@ -1201,7 +1200,7 @@ function renderSportStatus(){
   const groups = getSportGroups(wk);
   const el = document.getElementById('tab-status');
   if(!el) return;
-  updateFabBadge(groups.reduce((s,g)=>s+(g.registrants||[]).length,0));
+  updateFabBadge(groups.reduce((s,g)=>s+Object.values(g.registrants||{}).filter(Boolean).length,0));
 
   if(groups.length===0){
     el.innerHTML=`
@@ -1209,6 +1208,9 @@ function renderSportStatus(){
         <div style="font-size:32px;margin-bottom:8px;">🏃💨</div>
         <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:4px;">大家要記得運動呀！</div>
         <div style="font-size:12.5px;color:var(--text-muted);margin-bottom:14px;">本週還沒有揪團，快來發起第一個吧！</div>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);background:var(--gold-light);border:1px solid var(--gold);border-radius:10px;padding:8px 10px;margin-bottom:10px;">
+        💡 每人每月可使用 1 次運動補助（每月 1 日自動重置）
       </div>
       <button class="join-btn" onclick="document.getElementById('initiateModal').classList.add('open')">＋ 發起揪團</button>`;
     return;
@@ -1245,12 +1247,15 @@ function renderSportStatus(){
 
     const cards = byDate[dateKey].map(g=>{
       const i = g._idx;
-      const count = g.registrants.length;
+      const registrantsArr = Object.values(g.registrants||{}).filter(v => typeof v === 'string');
+      const count = registrantsArr.length;
       const pct = Math.min(count/5*100,100);
       const full = count>=5;
       const gcalUrl = buildGCalUrl(g);
-      const myKey = 'sport_joined_'+wk+'_'+i;
-      const joined = localStorage.getItem(myKey)==='1';
+      const myKey = 'sport_joined_'+wk+'_'+g.id; // store registrantKey when joined
+      const joined = !!localStorage.getItem(myKey);
+      const subsidyUsed = hasClaimedSubsidyThisMonth();
+      const canJoinNow = joined || !subsidyUsed;
       return `
         <div style="background:white;border-radius:10px;padding:11px 13px;margin-bottom:8px;border:1.5px solid ${full?'var(--mint)':'var(--border)'};">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px;">
@@ -1260,13 +1265,13 @@ function renderSportStatus(){
             </div>
             <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
               ${full?'<span style="background:var(--mint-light);color:#1a7a50;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;">✓ 成團</span>':'<span style="background:var(--sky-light);color:var(--sky);font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;">招募中</span>'}
-              <button onclick="deleteGroup(${i})" title="刪除這個揪團" style="background:none;border:none;cursor:pointer;color:rgba(0,0,0,0.2);font-size:13px;padding:2px 4px;border-radius:4px;line-height:1;transition:color 0.2s;" onmouseover="this.style.color='var(--coral)'" onmouseout="this.style.color='rgba(0,0,0,0.2)'">🗑</button>
+              <button onclick="deleteGroup('${g.id}')" title="刪除這個揪團" style="background:none;border:none;cursor:pointer;color:rgba(0,0,0,0.2);font-size:13px;padding:2px 4px;border-radius:4px;line-height:1;transition:color 0.2s;" onmouseover="this.style.color='var(--coral)'" onmouseout="this.style.color='rgba(0,0,0,0.2)'">🗑</button>
             </div>
           </div>
           ${g.place||g.organizer?`<div style="font-size:11.5px;color:var(--text-muted);margin-bottom:7px;">${g.place?'📍'+g.place+'　':''}${g.organizer?'👤'+g.organizer:''}</div>`:''}
           <div style="margin-bottom:6px;">
             <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:3px;">
-              <span style="display:flex;flex-wrap:wrap;gap:3px;">${g.registrants.map(r=>`<span style="background:var(--bg);border-radius:20px;padding:1px 7px;">${r||'匿名'}</span>`).join('')}${g.registrants.length===0?'<span style="opacity:0.5">還沒有人報名</span>':''}</span>
+              <span style="display:flex;flex-wrap:wrap;gap:3px;">${registrantsArr.map(r=>`<span style="background:var(--bg);border-radius:20px;padding:1px 7px;">${r}</span>`).join('')}${registrantsArr.length===0?'<span style="opacity:0.5">還沒有人報名</span>':''}</span>
               <span style="flex-shrink:0;margin-left:6px;font-weight:500;color:${full?'#1a7a50':'var(--sky)'};">${count}/5</span>
             </div>
             <div style="background:var(--border);border-radius:6px;height:5px;">
@@ -1275,8 +1280,8 @@ function renderSportStatus(){
             ${!full?`<div style="font-size:10.5px;color:var(--text-muted);margin-top:3px;">還差 ${Math.max(0,5-count)} 人成團解鎖 Calendar 🔒</div>`:''}
           </div>
           <div style="display:flex;gap:6px;">
-            <button onclick="joinGroup(${i})" style="flex:1;padding:7px;border-radius:8px;border:none;font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;transition:all 0.2s;background:${joined?'var(--coral-light)':'var(--navy)'};color:${joined?'var(--coral)':'white'};">
-              ${joined?'✕ 取消報名':'🙋 我要參加'}
+            <button onclick="joinGroup('${g.id}')" ${canJoinNow?'':'disabled'} style="flex:1;padding:7px;border-radius:8px;border:none;font-family:inherit;font-size:12.5px;font-weight:500;cursor:${canJoinNow?'pointer':'not-allowed'};transition:all 0.2s;background:${joined?'var(--coral-light)':(canJoinNow?'var(--navy)':'var(--border)')};color:${joined?'var(--coral)':(canJoinNow?'white':'var(--text-muted)')};">
+              ${joined?'✕ 取消報名':(canJoinNow?'🙋 我要參加':'本月補助已使用')}
             </button>
             ${full?`<a href="${gcalUrl}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:7px;border-radius:8px;background:var(--sky-light);border:1.5px solid #c2ddf5;color:var(--navy);font-size:12.5px;font-weight:500;text-decoration:none;">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -1297,36 +1302,42 @@ function renderSportStatus(){
   }).join('');
 
   el.innerHTML = `
+    <div style="font-size:12px;color:var(--text-muted);background:var(--gold-light);border:1px solid var(--gold);border-radius:10px;padding:8px 10px;margin-bottom:10px;">
+      💡 每人每月可使用 1 次運動補助（每月 1 日自動重置）${hasClaimedSubsidyThisMonth()?'｜你本月已使用':''}
+    </div>
     ${dateBlocks}
     <button class="join-btn" style="background:var(--sky);margin-top:4px;" onclick="document.getElementById('initiateModal').classList.add('open')">＋ 再發起一個揪團</button>`;
 }
 
-async function deleteGroup(idx){
+async function deleteGroup(groupId){
   const wk = getWeekKey();
-  const groups = [...getSportGroups(wk)];
-  groups.splice(idx, 1);
-  for(let j=0; j<20; j++) localStorage.removeItem('sport_joined_'+wk+'_'+j);
-  await fbSaveSport(wk, groups);
+  // remove local join marker for this group if any
+  localStorage.removeItem('sport_joined_'+wk+'_'+groupId);
+  await fbDelete(`sport/${wk}/${groupId}`);
   renderSportStatus();
 }
 
-async function joinGroup(idx){
+async function joinGroup(groupId){
   const wk = getWeekKey();
-  const myKey = 'sport_joined_'+wk+'_'+idx;
-  const joined = localStorage.getItem(myKey)==='1';
+  const myKey = 'sport_joined_'+wk+'_'+groupId; // stores registrantKey
+  const joinedRegistrantKey = localStorage.getItem(myKey);
+  const joined = !!joinedRegistrantKey;
   if(!joined){
-    document.getElementById('joinGroupIdx').value = idx;
+    if(hasClaimedSubsidyThisMonth()){
+      alert('你本月的運動補助已使用，將於下個月自動重置。');
+      return;
+    }
+    document.getElementById('joinGroupId').value = groupId;
     document.getElementById('joinModal').classList.add('open');
     return;
   }
-  const btn = document.querySelector(`button[onclick="joinGroup(${idx})"]`);
+  const btn = document.querySelector(`button[onclick="joinGroup('${groupId}')"]`);
   if(btn){ btn.disabled=true; btn.textContent='處理中...'; }
   try {
-    const groups = JSON.parse(JSON.stringify(getSportGroups(wk)));
-    if(!groups[idx]) return;
-    groups[idx].registrants = groups[idx].registrants.slice(0,-1);
+    // cancel join: delete my registrant entry
+    await fbDelete(`sport/${wk}/${groupId}/registrants/${joinedRegistrantKey}`);
     localStorage.removeItem(myKey);
-    await fbSaveSport(wk, groups);
+    clearClaimedSubsidyIfCurrentMonth();
   } catch(e){ alert('取消報名失敗，請再試一次'); }
   renderSportStatus();
 }
@@ -1340,25 +1351,24 @@ function openJoinModal(){ document.getElementById('joinModal').classList.add('op
 function closeJoinModal(){ document.getElementById('joinModal').classList.remove('open'); }
 async function confirmJoin(){
   const name = document.getElementById('joinName').value.trim();
-  if(!name){ 
+  const groupId = document.getElementById('joinGroupId').value;
+  if(!name){
+    alert('請填寫姓名後再報名');
     document.getElementById('joinName').focus();
-    document.getElementById('joinName').style.borderColor = 'var(--coral)';
-    setTimeout(()=>{ document.getElementById('joinName').style.borderColor = ''; }, 2000);
-    alert('請填入你的名字才能報名！');
     return;
   }
-  const idx = parseInt(document.getElementById('joinGroupIdx').value)||0;
   const confirmBtn = document.querySelector('#joinModal .modal-confirm');
   if(confirmBtn){ confirmBtn.disabled=true; confirmBtn.textContent='報名中...'; }
   try {
     const wk = getWeekKey();
-    const groups = JSON.parse(JSON.stringify(getSportGroups(wk)));
-    if(!groups[idx]){ alert('找不到這個揪團，請重新整理'); closeJoinModal(); return; }
-    groups[idx].registrants.push(name||'');
-    localStorage.setItem('sport_joined_'+wk+'_'+idx,'1');
-    await fbSaveSport(wk, groups);
-    const g = groups[idx];
-    trackEvent({ action:'sport_join', weekKey:wk, item:g.item, isoDate:g.isoDate, time:g.time, place:g.place, organizer:g.organizer, name:name||'匿名夥伴', action_type:'join' });
+    if(!groupId){ alert('找不到這個揪團，請重新整理'); closeJoinModal(); return; }
+    if(hasClaimedSubsidyThisMonth()){ throw new Error('subsidy already used this month'); }
+    const registrantRes = await fbPush(`sport/${wk}/${groupId}/registrants`, name);
+    if(!registrantRes || !registrantRes.name){ throw new Error('push registrant failed'); }
+    localStorage.setItem('sport_joined_'+wk+'_'+groupId, registrantRes.name);
+    setClaimedSubsidyThisMonth();
+    const g = (getSportGroups(wk).find(x=>x.id===groupId)) || {};
+    trackEvent({ action:'sport_join', weekKey:wk, item:g.item, isoDate:g.isoDate, time:g.time, place:g.place, organizer:g.organizer, name, action_type:'join' });
   } catch(e){ alert('報名失敗，請再試一次'); }
   closeJoinModal();
   document.getElementById('joinName').value='';
@@ -1381,9 +1391,7 @@ async function confirmInitiate(){
     endHHMM=String((parseInt(h)+2)%24).padStart(2,'0')+m+'00';
   }
   const wk = getWeekKey();
-  const groups = JSON.parse(JSON.stringify(getSportGroups(wk)));
-  groups.push({item, time, place, isoDate:dateInput, startHHMM, endHHMM, organizer, registrants:[]});
-  await fbSaveSport(wk, groups);
+  await fbPush(`sport/${wk}`, {item, time, place, isoDate:dateInput, startHHMM, endHHMM, organizer, registrants:null});
   trackEvent({ action:'sport_create', weekKey:wk, item, time, place, isoDate:dateInput, organizer });
   document.getElementById('initiateModal').classList.remove('open');
   ['sportItem','sportTime','sportPlace','sportDate','sportOrganizer'].forEach(id=>document.getElementById(id).value='');
@@ -1479,8 +1487,8 @@ localStorage.removeItem('uppeta_sport2');
 // 揪團即時同步
 fbListen(`sport/${getWeekKey()}`, data => {
   const wk = getWeekKey();
-  _sportCache[wk] = (data && Array.isArray(data)) ? data : [];
-  updateFabBadge(_sportCache[wk].reduce((s,g)=>s+(g.registrants||[]).length,0));
+  _sportCache[wk] = normalizeSportGroups(data);
+  updateFabBadge(_sportCache[wk].reduce((s,g)=>s+Object.values(g.registrants||{}).filter(Boolean).length,0));
   if(document.getElementById('sportPanel').classList.contains('open')){
     renderSportStatus();
   }
