@@ -1129,10 +1129,32 @@ const SPORT_ACTIVITY_LIST = [
 
 function getWeekKey(){ const d=new Date(); const jan1=new Date(d.getFullYear(),0,1); return `${d.getFullYear()}-W${Math.ceil(((d-jan1)/86400000+jan1.getDay()+1)/7)}`; }
 function getMonthKey(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
-function hasClaimedSubsidyThisMonth(){ return localStorage.getItem('sport_subsidy_claimed_month') === getMonthKey(); }
-function setClaimedSubsidyThisMonth(){ localStorage.setItem('sport_subsidy_claimed_month', getMonthKey()); }
-function clearClaimedSubsidyIfCurrentMonth(){
-  if(hasClaimedSubsidyThisMonth()) localStorage.removeItem('sport_subsidy_claimed_month');
+function getGroupMonthKey(group){
+  if(group && group.isoDate && /^\d{4}-\d{2}/.test(group.isoDate)) return group.isoDate.slice(0,7);
+  return getMonthKey();
+}
+function getSubsidyClaims(){
+  try { return JSON.parse(localStorage.getItem('sport_subsidy_claimed_map') || '{}'); }
+  catch(e){ return {}; }
+}
+function saveSubsidyClaims(claims){
+  localStorage.setItem('sport_subsidy_claimed_map', JSON.stringify(claims));
+}
+function hasClaimedSubsidyForMonth(monthKey){
+  const claims = getSubsidyClaims();
+  return !!claims[monthKey];
+}
+function markSubsidyClaim(monthKey, groupId){
+  const claims = getSubsidyClaims();
+  claims[monthKey] = groupId || '1';
+  saveSubsidyClaims(claims);
+}
+function clearSubsidyClaim(monthKey, groupId){
+  const claims = getSubsidyClaims();
+  if(!claims[monthKey]) return;
+  if(groupId && claims[monthKey] !== groupId) return;
+  delete claims[monthKey];
+  saveSubsidyClaims(claims);
 }
 
 // 揪團完全用 Firebase，localStorage 完全不用
@@ -1210,7 +1232,7 @@ function renderSportStatus(){
         <div style="font-size:12.5px;color:var(--text-muted);margin-bottom:14px;">本週還沒有揪團，快來發起第一個吧！</div>
       </div>
       <div style="font-size:12px;color:var(--text-muted);background:var(--gold-light);border:1px solid var(--gold);border-radius:10px;padding:8px 10px;margin-bottom:10px;">
-        💡 每人每月可使用 1 次運動補助（每月 1 日自動重置）
+        💡 每人每個活動月份可使用 1 次運動補助（依活動日期月份計算）
       </div>
       <button class="join-btn" onclick="document.getElementById('initiateModal').classList.add('open')">＋ 發起揪團</button>`;
     return;
@@ -1254,7 +1276,8 @@ function renderSportStatus(){
       const gcalUrl = buildGCalUrl(g);
       const myKey = 'sport_joined_'+wk+'_'+g.id; // store registrantKey when joined
       const joined = !!localStorage.getItem(myKey);
-      const subsidyUsed = hasClaimedSubsidyThisMonth();
+      const groupMonthKey = getGroupMonthKey(g);
+      const subsidyUsed = hasClaimedSubsidyForMonth(groupMonthKey);
       const canJoinNow = joined || !subsidyUsed;
       return `
         <div style="background:white;border-radius:10px;padding:11px 13px;margin-bottom:8px;border:1.5px solid ${full?'var(--mint)':'var(--border)'};">
@@ -1303,7 +1326,7 @@ function renderSportStatus(){
 
   el.innerHTML = `
     <div style="font-size:12px;color:var(--text-muted);background:var(--gold-light);border:1px solid var(--gold);border-radius:10px;padding:8px 10px;margin-bottom:10px;">
-      💡 每人每月可使用 1 次運動補助（每月 1 日自動重置）${hasClaimedSubsidyThisMonth()?'｜你本月已使用':''}
+      💡 每人每個活動月份可使用 1 次運動補助（依活動日期月份計算）
     </div>
     ${dateBlocks}
     <button class="join-btn" style="background:var(--sky);margin-top:4px;" onclick="document.getElementById('initiateModal').classList.add('open')">＋ 再發起一個揪團</button>`;
@@ -1322,9 +1345,11 @@ async function joinGroup(groupId){
   const myKey = 'sport_joined_'+wk+'_'+groupId; // stores registrantKey
   const joinedRegistrantKey = localStorage.getItem(myKey);
   const joined = !!joinedRegistrantKey;
+  const group = getSportGroups(wk).find(x=>x.id===groupId);
+  const groupMonthKey = getGroupMonthKey(group);
   if(!joined){
-    if(hasClaimedSubsidyThisMonth()){
-      alert('你本月的運動補助已使用，將於下個月自動重置。');
+    if(hasClaimedSubsidyForMonth(groupMonthKey)){
+      alert('你在這個活動月份的運動補助已使用。');
       return;
     }
     document.getElementById('joinGroupId').value = groupId;
@@ -1337,7 +1362,7 @@ async function joinGroup(groupId){
     // cancel join: delete my registrant entry
     await fbDelete(`sport/${wk}/${groupId}/registrants/${joinedRegistrantKey}`);
     localStorage.removeItem(myKey);
-    clearClaimedSubsidyIfCurrentMonth();
+    clearSubsidyClaim(groupMonthKey, groupId);
   } catch(e){ alert('取消報名失敗，請再試一次'); }
   renderSportStatus();
 }
@@ -1362,11 +1387,13 @@ async function confirmJoin(){
   try {
     const wk = getWeekKey();
     if(!groupId){ alert('找不到這個揪團，請重新整理'); closeJoinModal(); return; }
-    if(hasClaimedSubsidyThisMonth()){ throw new Error('subsidy already used this month'); }
+    const group = getSportGroups(wk).find(x=>x.id===groupId);
+    const groupMonthKey = getGroupMonthKey(group);
+    if(hasClaimedSubsidyForMonth(groupMonthKey)){ throw new Error('subsidy already used for this month'); }
     const registrantRes = await fbPush(`sport/${wk}/${groupId}/registrants`, name);
     if(!registrantRes || !registrantRes.name){ throw new Error('push registrant failed'); }
     localStorage.setItem('sport_joined_'+wk+'_'+groupId, registrantRes.name);
-    setClaimedSubsidyThisMonth();
+    markSubsidyClaim(groupMonthKey, groupId);
     const g = (getSportGroups(wk).find(x=>x.id===groupId)) || {};
     trackEvent({ action:'sport_join', weekKey:wk, item:g.item, isoDate:g.isoDate, time:g.time, place:g.place, organizer:g.organizer, name, action_type:'join' });
   } catch(e){ alert('報名失敗，請再試一次'); }
